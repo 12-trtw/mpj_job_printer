@@ -1,0 +1,170 @@
+import 'dart:typed_data';
+import 'package:charset_converter/charset_converter.dart';
+import 'package:intl/intl.dart';
+import '../../../../core/utils/thai_print_utils.dart';
+
+class Lq310FuelOrderBuilder {
+  static const String escInit = '\x1B\x40';
+  static const String escThaiTis620 = '\x1B\x74\x15';
+  static const String escThai3Pass = '\x1C\x70\x03';
+  static const String font10Cpi = '\x1B\x50';
+  static const String font15Cpi = '\x1B\x67';
+
+  String _toThaiText(double? numVal) {
+    if (numVal == null || numVal == 0) return 'ศูนย์';
+    final d = [
+      'ศูนย์',
+      'หนึ่ง',
+      'สอง',
+      'สาม',
+      'สี่',
+      'ห้า',
+      'หก',
+      'เจ็ด',
+      'แปด',
+      'เก้า'
+    ];
+    final p = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน'];
+
+    String str = numVal.floor().toString();
+    String res = '';
+
+    for (int i = 0; i < str.length; i++) {
+      int n = int.parse(str[i]);
+      int pos = str.length - 1 - i;
+      if (n != 0) {
+        if (pos == 1 && n == 1) {
+          res += 'สิบ';
+        } else if (pos == 1 && n == 2) {
+          res += 'ยี่สิบ';
+        } else if (pos == 0 &&
+            n == 1 &&
+            str.length > 1 &&
+            str[str.length - 2] != '0') {
+          res += 'เอ็ด';
+        } else {
+          res += d[n] + p[pos];
+        }
+      }
+    }
+    return res;
+  }
+
+  String _padRight(String str, int targetLength) {
+    final dLen = ThaiPrintUtils.displayLength(str);
+    if (dLen >= targetLength) return str;
+    return str + (' ' * (targetLength - dLen));
+  }
+
+  Future<Uint8List> buildPrintBuffer(
+      List<Map<String, dynamic>> printData) async {
+    final String escSetTab = '\x1B\x44${String.fromCharCode(70)}\x00';
+    final StringBuffer contentBuffer = StringBuffer();
+
+    contentBuffer
+        .write('$escInit$font15Cpi$escThaiTis620$escThai3Pass$escSetTab');
+
+    for (final item in printData) {
+      final fleetId = item['fleet_id']?.toString() ?? '';
+
+      String dateStr = '....................';
+      String printTime = '';
+      if (item['finish_date'] != null) {
+        try {
+          final d = DateTime.parse(item['finish_date'].toString());
+          dateStr = DateFormat('d MMM yyyy', 'th_TH').format(d);
+          printTime = DateFormat('dd/MM/yy HH:mm', 'en_GB').format(d);
+        } catch (_) {}
+      }
+
+      final vehicle =
+          item['vehicle_name']?.toString() ?? '....................';
+      final driver = item['driver']?.toString() ?? '....................';
+      final fuelName = item['fuel_name']?.toString() ?? '....................';
+
+      final double fuelQtyNum = item['fuel_qty'] != null
+          ? double.tryParse(item['fuel_qty'].toString()) ?? 0.0
+          : 0.0;
+
+      final fuelQty =
+          fuelQtyNum > 0 ? fuelQtyNum.toStringAsFixed(2) : '..........';
+      final thaiText = fuelQtyNum > 0 ? _toThaiText(fuelQtyNum) : '';
+
+      final jobNo = item['job_no']?.toString() ?? '....................';
+      final mileage =
+          item['start_mileage']?.toString() ?? '....................';
+
+      final List<String> lines = [];
+
+      lines.add('');
+      lines.add(
+          '$font10Cpi                     MPJ Logistics Public Company Limited$font15Cpi');
+      lines.add('');
+      lines.add(
+          '                                                [ ใบสั่งเติมน้ำมัน ]\t.         เลขที่ใบสั่งเติม $fleetId');
+      lines.add('-' * 112);
+      lines.add('');
+
+      final l1Left = _padRight('ชื่อปั๊มที่เติม', 20) +
+          _padRight('........................', 35);
+      final l1Right = _padRight('วันที่', 12) + dateStr;
+      lines.add('$l1Left\t$l1Right');
+
+      final vName = vehicle.length > 34 ? vehicle.substring(0, 34) : vehicle;
+      final l2Left = _padRight('ทะเบียนรถที่เติม', 20) + _padRight(vName, 35);
+      final l2Right = _padRight('ชื่อ พขร.', 12) + driver;
+      lines.add('$l2Left\t$l2Right');
+
+      final l3Left = _padRight('ชนิดเชื้อเพลิง', 20) + _padRight(fuelName, 35);
+      final l3Right = _padRight('เลขไมล์', 12) + mileage;
+      lines.add('$l3Left\t$l3Right');
+
+      final l4Left = _padRight('ปริมาณ (ลิตร/กก.)', 20) +
+          _padRight(fuelQty, 11) +
+          '( ' +
+          _padRight(thaiText, 26) +
+          ' )';
+      final l4Right = _padRight('Job no. :', 12) + jobNo;
+      lines.add('$l4Left\t$l4Right');
+
+      final l5Left = _padRight('จำนวนเงิน (บาท)', 20) +
+          _padRight('', 11) +
+          '( ' +
+          _padRight('', 26) +
+          ' )';
+      lines.add(l5Left);
+
+      lines.add('ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้');
+
+      final sig1Left = _padRight('ลงชื่อ', 8) +
+          _padRight('............................', 28) +
+          'พนักงานขับรถ';
+      final sig1Right = _padRight('ลงชื่อ', 8) +
+          _padRight('............................', 28) +
+          'ผู้สั่งเติม';
+      lines.add('$sig1Left\t$sig1Right');
+
+      final sig2Left = _padRight('ลงชื่อ', 8) +
+          _padRight('............................', 28) +
+          'พนักงานปั๊มน้ำมัน';
+      final sig2Right = 'User ID : Admin      $printTime';
+      lines.add('$sig2Left\t$sig2Right');
+
+      final footerLeft = 'หมายเหตุ : $fleetId';
+      final footerRight = 'FM-OP-40, Rev01 (19-05-68)';
+      lines.add('${_padRight(footerLeft, 55)}\t$footerRight');
+
+      lines.add('');
+      lines.add('');
+
+      contentBuffer.write(lines.join('\r\n') + '\r\n');
+    }
+
+    final Uint8List? tis620Bytes =
+        await CharsetConverter.encode('TIS620', contentBuffer.toString());
+    if (tis620Bytes == null) {
+      throw Exception('ไม่สามารถเข้ารหัสภาษาไทย TIS-620 ได้');
+    }
+    return tis620Bytes;
+  }
+}

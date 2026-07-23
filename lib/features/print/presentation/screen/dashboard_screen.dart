@@ -14,10 +14,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final TextEditingController _startDateCtrl = TextEditingController();
   final TextEditingController _endDateCtrl = TextEditingController();
 
+  String _selectedMode = 'job';
+
   @override
   void initState() {
     super.initState();
-    // ตั้งค่าเริ่มต้นเป็นวันที่ปัจจุบัน
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     _startDateCtrl.text = today;
     _endDateCtrl.text = today;
@@ -60,11 +61,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // --- Header ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('ระบบพิมพ์ใบสั่งปฏิบัติงาน (Job Order Form)',
+                  const Text('ระบบบริหารจัดการงานพิมพ์ (MPJ Print Dashboard)',
                       style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -73,19 +73,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                        color: const Color(0xFF065F46),
+                        color: _selectedMode == 'job'
+                            ? const Color(0xFF065F46)
+                            : const Color(0xFF1E3A8A),
                         borderRadius: BorderRadius.circular(20)),
-                    child: const Text('พิมพ์ลงฟอร์มสำเร็จรูป (Native Win32)',
+                    child: Text(
+                        _selectedMode == 'job'
+                            ? 'พิมพ์ลงฟอร์มสำเร็จรูป'
+                            : 'พิมพ์กระดาษต่อเนื่อง (RAW)',
                         style: TextStyle(
-                            color: Color(0xFF34D399),
+                            color: _selectedMode == 'job'
+                                ? const Color(0xFF34D399)
+                                : const Color(0xFF93C5FD),
                             fontSize: 12,
                             fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // --- Toolbar Section ---
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text('📋 ใบสั่งปฏิบัติงาน (Job Order)',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    selected: _selectedMode == 'job',
+                    selectedColor: const Color(0xFFD1FAE5),
+                    onSelected: (bool selected) {
+                      if (selected) setState(() => _selectedMode = 'job');
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  ChoiceChip(
+                    label: const Text('⛽ ใบสั่งเติมน้ำมัน (Fuel Order)',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    selected: _selectedMode == 'fuel',
+                    selectedColor: const Color(0xFFDBEAFE),
+                    onSelected: (bool selected) {
+                      if (selected) setState(() => _selectedMode = 'fuel');
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -98,7 +127,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   alignment: WrapAlignment.spaceBetween,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    // Date Picker Group
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -116,7 +144,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   horizontal: 16, vertical: 16)),
                           onPressed: state.isLoading
                               ? null
-                              : () => notifier.fetchJobs(
+                              : () => notifier.fetchJobs(_selectedMode,
                                   _startDateCtrl.text, _endDateCtrl.text),
                           icon: state.isLoading
                               ? const SizedBox(
@@ -125,13 +153,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   child: CircularProgressIndicator(
                                       strokeWidth: 2, color: Colors.white))
                               : const Icon(Icons.search, size: 18),
-                          label: const Text('ดึงข้อมูล Job',
+                          label: const Text('ดึงข้อมูล',
                               style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
-
-                    // Printer Selector Group
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -176,8 +202,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         )
                       ],
                     ),
-
-                    // Print Button
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2563EB),
@@ -189,7 +213,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       onPressed:
                           (state.selectedKeys.isEmpty || state.isPrinting)
                               ? null
-                              : notifier.printSelectedJobs,
+                              : () => notifier.printSelectedJobs(_selectedMode),
                       icon: state.isPrinting
                           ? const SizedBox(
                               width: 16,
@@ -198,15 +222,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   strokeWidth: 2, color: Colors.white))
                           : const Icon(Icons.print_outlined, size: 20),
                       label: Text(
-                          '🖨️ ยิงพิกัดลงฟอร์ม (${state.selectedKeys.length})',
+                          '🖨️ สั่งพิมพ์ (${state.selectedKeys.length})',
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 14)),
                     ),
                   ],
                 ),
               ),
-
-              // --- Status Message ---
               if (state.statusMessage.isNotEmpty)
                 Container(
                   margin: const EdgeInsets.only(top: 16),
@@ -232,10 +254,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         fontSize: 14),
                   ),
                 ),
-
               const SizedBox(height: 16),
-
-              // --- Select All & List View ---
               if (state.jobs.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8, left: 4),
@@ -255,21 +274,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ],
                   ),
                 ),
-
               Expanded(
                 child: state.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : state.jobs.isEmpty
                         ? const Center(
                             child: Text(
-                                'กรุณาเลือกช่วงเวลาดึงข้อมูลเพื่อระบุพิกัดบิล...',
+                                'ไม่มีข้อมูล กดปุ่มค้นหาเพื่อดึงข้อมูลใหม่...',
                                 style: TextStyle(
                                     color: Colors.grey, fontSize: 15)))
                         : ListView.builder(
                             itemCount: state.jobs.length,
                             itemBuilder: (context, index) {
                               final item = state.jobs[index];
-                              final uniqueKey = '${item['job_no']}_$index';
+
+                              final uniqueKey = _selectedMode == 'job'
+                                  ? '${item['job_no']}_$index'
+                                  : '${item['fleet_id']}_$index';
+
                               final isSelected =
                                   state.selectedKeys.contains(uniqueKey);
 
@@ -294,7 +316,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                         notifier.toggleSelection(uniqueKey),
                                   ),
                                   title: Text(
-                                    'Job No: ${item['job_no']} | ลูกค้า: ${item['customer_name'] ?? '-'}',
+                                    _selectedMode == 'job'
+                                        ? 'Job No: ${item['job_no']} | ลูกค้า: ${item['customer_name'] ?? '-'}'
+                                        : 'ทะเบียน: ${item['vehicle_name'] ?? '-'} | Job: ${item['job_no'] ?? '-'}',
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 15,
@@ -306,13 +330,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                       children: [
                                         Expanded(
                                             child: Text(
-                                                'ประเภทงาน: ${item['type_name'] ?? '-'}',
+                                                _selectedMode == 'job'
+                                                    ? 'ประเภทงาน: ${item['type_name'] ?? '-'}'
+                                                    : 'วันที่: ${item['finish_date'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(item['finish_date'])) : '-'} | คนขับ: ${item['driver'] ?? '-'}',
                                                 style: const TextStyle(
                                                     fontSize: 13,
                                                     color: Color(0xFF4B5563)))),
                                         Expanded(
                                             child: Text(
-                                                'ทะเบียนรถ: ${item['vehicle_name'] ?? '-'} | ตู้: ${item['container_no'] ?? '-'}',
+                                                _selectedMode == 'job'
+                                                    ? 'ทะเบียนรถ: ${item['vehicle_name'] ?? '-'} | ตู้: ${item['container_no'] ?? '-'}'
+                                                    : 'ปริมาณน้ำมัน: ${item['fuel_qty'] ?? 0} ลิตร',
                                                 style: const TextStyle(
                                                     fontSize: 13,
                                                     color: Color(0xFF4B5563)))),

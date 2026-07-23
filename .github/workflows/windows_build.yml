@@ -1,37 +1,30 @@
 name: Build Windows EXE
 
-# กำหนดให้สามารถกดปุ่มสั่ง Build เองได้จากหน้าเว็บ GitHub (workflow_dispatch)
+
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    # สั่งให้ GitHub ไปหาเครื่องเซิร์ฟเวอร์ Windows รุ่นล่าสุดมาใช้รันงานนี้
     runs-on: windows-latest
 
     steps:
-      # 1. ดึงซอร์สโค้ดล่าสุดของคุณมาที่เซิร์ฟเวอร์
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. ติดตั้ง Flutter SDK บนเซิร์ฟเวอร์ Windows
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      # 3. โหลด Packages ต่างๆ ที่ระบุไว้ใน pubspec.yaml
       - name: Install dependencies
         run: flutter pub get
 
-      # 4. สั่งคอมไพล์โค้ดเป็น Native Windows .exe
       - name: Build Windows release
         run: flutter build windows --release
 
-      # 5. ซิบโฟลเดอร์ Release ทั้งหมดเป็นไฟล์ให้คุณดาวน์โหลด
       - name: Upload Windows Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: MPJ_Job_Printer_Windows_Release
-          # ระบุพิกัดโฟลเดอร์ที่บรรจุไฟล์ .exe และ .dll ทั้งหมด
           path: build/windows/x64/runner/Release/
