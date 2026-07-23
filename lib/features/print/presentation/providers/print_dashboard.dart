@@ -23,7 +23,7 @@ class DashboardState {
   final bool isLoading;
   final bool isPrinting;
   final List<Map<String, dynamic>> jobs;
-  final Set<String> selectedKeys; // เก็บ unique key: job_no_index
+  final Set<String> selectedKeys;
   final List<String> availablePrinters;
   final String? selectedPrinter;
   final String statusMessage;
@@ -77,7 +77,6 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     fetchPrinters();
   }
 
-  /// 1. ค้นหาเครื่องพิมพ์ในระบบ Windows และ Auto-Select LQ-310 / EPSON
   Future<void> fetchPrinters() async {
     try {
       final printers = await printerService.getInstalledPrinters();
@@ -102,12 +101,10 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
-  /// 2. เลือกเปลี่ยนเครื่องพิมพ์
   void setPrinter(String? printerName) {
     state = state.copyWith(selectedPrinter: printerName);
   }
 
-  /// 3. ดึงรายการ Job จาก TMS API
   Future<void> fetchJobs(String startDate, String endDate) async {
     if (startDate.isEmpty || endDate.isEmpty) {
       state = state.copyWith(
@@ -142,7 +139,6 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
-  /// 4. จัดการติ๊กเลือก Checkbox
   void toggleSelection(String uniqueKey) {
     final newSet = Set<String>.from(state.selectedKeys);
     if (newSet.contains(uniqueKey)) {
@@ -165,7 +161,6 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
-  /// 5. สั่งแปลงข้อมูลและยิงเข้าท่อเครื่องพิมพ์ Windows Native
   Future<void> printSelectedJobs() async {
     if (state.selectedPrinter == null) {
       state = state.copyWith(
@@ -191,10 +186,8 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
         isError: false);
 
     try {
-      // แปลงข้อมูลเป็น TIS-620 Bytes
       final rawBytes = await formBuilder.buildPrintBuffer(selectedJobs);
 
-      // ยิงข้อความดิบเข้า Driver ผ่าน Win32/PowerShell
       await printerService.printRawData(
         printerName: state.selectedPrinter!,
         rawTis620Bytes: rawBytes,
@@ -205,7 +198,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
         statusMessage:
             '✅ ยิงพิกัดบิลลงฟอร์มผ่านเครื่อง [${state.selectedPrinter}] สำเร็จเรียบร้อย!',
         isError: false,
-        selectedKeys: {}, // ล้างค่าที่เลือกเมื่อพิมพ์สำเร็จ
+        selectedKeys: {},
       );
     } catch (e) {
       state = state.copyWith(

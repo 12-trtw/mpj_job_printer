@@ -46,13 +46,10 @@ class WindowsPrinterService {
 
     try {
       await tempFile.writeAsBytes(rawTis620Bytes);
+
       final ProcessResult printResult = await Process.run(
-        'powershell.exe',
-        [
-          '-NoProfile',
-          '-Command',
-          'Get-Content -Path "$tempFilePath" -Encoding Byte | Out-Printer -Name "$printerName"'
-        ],
+        'cmd.exe',
+        ['/c', 'copy', '/B', tempFilePath, r'\\localhost\LQ310'],
         runInShell: true,
       );
 
