@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:charset_converter/charset_converter.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/utils/thai_print_utils.dart';
+import '../../../thai_print_utils.dart';
 
 class Lq310FuelOrderBuilder {
   static const String escInit = '\x1B\x40';

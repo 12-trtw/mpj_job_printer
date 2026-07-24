@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:mpj_job_printer/features/print/presentation/providers/print_dashboard.dart';
+import 'package:mpj_job_printer/src/features/presentation/controller/print_controller.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -13,6 +13,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final TextEditingController _startDateCtrl = TextEditingController();
   final TextEditingController _endDateCtrl = TextEditingController();
+  final TextEditingController _keywordCtrl = TextEditingController();
 
   String _selectedMode = 'job';
 
@@ -22,6 +23,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     _startDateCtrl.text = today;
     _endDateCtrl.text = today;
+  }
+
+  @override
+  void dispose() {
+    _startDateCtrl.dispose();
+    _endDateCtrl.dispose();
+    _keywordCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _pickDate(TextEditingController ctrl) async {
@@ -45,7 +54,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       backgroundColor: const Color(0xFFF3F4F6),
       body: Center(
         child: Container(
-          width: 1000,
+          width: 1100,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -136,6 +145,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             child: Text('-')),
                         _buildDateInput(_endDateCtrl, 'ถึงวันที่'),
                         const SizedBox(width: 12),
+                        SizedBox(
+                          width: 200,
+                          height: 40,
+                          child: TextField(
+                            controller: _keywordCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'ค้นหา (Job/ทะเบียนรถ)',
+                              isDense: true,
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.search, size: 18),
+                            ),
+                            style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.bold),
+                            onSubmitted: (_) => notifier.fetchJobs(
+                              mode: _selectedMode,
+                              startDate: _startDateCtrl.text,
+                              endDate: _endDateCtrl.text,
+                              keyword: _keywordCtrl.text,
+                              page: 1,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF10B981),
@@ -144,8 +176,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   horizontal: 16, vertical: 16)),
                           onPressed: state.isLoading
                               ? null
-                              : () => notifier.fetchJobs(_selectedMode,
-                                  _startDateCtrl.text, _endDateCtrl.text),
+                              : () => notifier.fetchJobs(
+                                    mode: _selectedMode,
+                                    startDate: _startDateCtrl.text,
+                                    endDate: _endDateCtrl.text,
+                                    keyword: _keywordCtrl.text,
+                                    page: 1,
+                                  ),
                           icon: state.isLoading
                               ? const SizedBox(
                                   width: 16,
@@ -213,7 +250,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       onPressed:
                           (state.selectedKeys.isEmpty || state.isPrinting)
                               ? null
-                              : () => notifier.printSelectedJobs(_selectedMode),
+                              : () => notifier.printSelectedJobs(),
                       icon: state.isPrinting
                           ? const SizedBox(
                               width: 16,
@@ -234,12 +271,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   margin: const EdgeInsets.only(top: 16),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: state.isError
+                    color: state.statusMessage.contains('❌')
                         ? const Color(0xFFFEE2E2)
                         : const Color(0xFFDCFCE7),
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
-                        color: state.isError
+                        color: state.statusMessage.contains('❌')
                             ? const Color(0xFFEF4444)
                             : const Color(0xFF10B981)),
                   ),
@@ -248,7 +285,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: state.isError
+                        color: state.statusMessage.contains('❌')
                             ? const Color(0xFF991B1B)
                             : const Color(0xFF166534),
                         fontSize: 14),
@@ -268,7 +305,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 14)),
                       const Spacer(),
-                      Text('แสดงทั้งหมด ${state.jobs.length} รายการ',
+                      Text('แสดงหน้านี้ ${state.jobs.length} รายการ',
                           style: const TextStyle(
                               color: Colors.grey, fontSize: 13)),
                     ],
@@ -288,9 +325,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             itemBuilder: (context, index) {
                               final item = state.jobs[index];
 
-                              final uniqueKey = _selectedMode == 'job'
-                                  ? '${item['job_no']}_$index'
-                                  : '${item['fleet_id']}_$index';
+                              final refId = item['job_no'] ??
+                                  item['fleet_id'] ??
+                                  index.toString();
+                              final uniqueKey = '${refId}_$index';
 
                               final isSelected =
                                   state.selectedKeys.contains(uniqueKey);
@@ -316,8 +354,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                         notifier.toggleSelection(uniqueKey),
                                   ),
                                   title: Text(
-                                    _selectedMode == 'job'
-                                        ? 'Job No: ${item['job_no']} | ลูกค้า: ${item['customer_name'] ?? '-'}'
+                                    state.currentMode == 'job'
+                                        ? 'Job No: ${item['job_no'] ?? '-'} | ลูกค้า: ${item['customer_name'] ?? '-'}'
                                         : 'ทะเบียน: ${item['vehicle_name'] ?? '-'} | Job: ${item['job_no'] ?? '-'}',
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold,
@@ -330,7 +368,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                       children: [
                                         Expanded(
                                             child: Text(
-                                                _selectedMode == 'job'
+                                                state.currentMode == 'job'
                                                     ? 'ประเภทงาน: ${item['type_name'] ?? '-'}'
                                                     : 'วันที่: ${item['finish_date'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(item['finish_date'])) : '-'} | คนขับ: ${item['driver'] ?? '-'}',
                                                 style: const TextStyle(
@@ -338,7 +376,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                     color: Color(0xFF4B5563)))),
                                         Expanded(
                                             child: Text(
-                                                _selectedMode == 'job'
+                                                state.currentMode == 'job'
                                                     ? 'ทะเบียนรถ: ${item['vehicle_name'] ?? '-'} | ตู้: ${item['container_no'] ?? '-'}'
                                                     : 'ปริมาณน้ำมัน: ${item['fuel_qty'] ?? 0} ลิตร',
                                                 style: const TextStyle(
@@ -352,6 +390,69 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             },
                           ),
               ),
+              if (state.jobs.isNotEmpty && !state.isLoading)
+                Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border:
+                        Border(top: BorderSide(color: Colors.grey.shade300)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        state.totalItems > 0
+                            ? 'พบข้อมูลทั้งหมด ${state.totalItems} รายการ'
+                            : 'กำลังแสดงข้อมูลหน้า ${state.currentPage}',
+                        style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      Row(
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: state.currentPage > 1
+                                ? () =>
+                                    notifier.changePage(state.currentPage - 1)
+                                : null,
+                            icon: const Icon(Icons.chevron_left, size: 18),
+                            label: const Text('ก่อนหน้า'),
+                            style: OutlinedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              foregroundColor: const Color(0xFF374151),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'หน้า ${state.currentPage} / ${state.totalPages}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: state.currentPage < state.totalPages
+                                ? () =>
+                                    notifier.changePage(state.currentPage + 1)
+                                : null,
+                            icon: const Icon(Icons.chevron_right, size: 18),
+                            label: const Text('ถัดไป'),
+                            style: OutlinedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              foregroundColor: const Color(0xFF374151),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),

@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import '../../../../core/services/windows_printer_service.dart';
-import '../../data/datasources/lq310_form_builder.dart';
-import '../../data/datasources/lq310_fuel_builder.dart';
+
+import '../../../services/windows_printer_service.dart';
+import '../../utils/print/data/datasources/lq310_form_builder.dart';
+import '../../utils/print/data/datasources/lq310_fuel_builder.dart';
 
 class PrintDashboardState {
   final bool isLoading;
@@ -15,6 +16,13 @@ class PrintDashboardState {
   final List<String> availablePrinters;
   final String? selectedPrinter;
 
+  final int currentPage;
+  final int totalPages;
+  final int totalItems;
+  final String currentMode;
+  final String currentStartDate;
+  final String currentEndDate;
+
   PrintDashboardState({
     this.isLoading = false,
     this.isPrinting = false,
@@ -24,6 +32,12 @@ class PrintDashboardState {
     this.selectedKeys = const {},
     this.availablePrinters = const [],
     this.selectedPrinter,
+    this.currentPage = 1,
+    this.totalPages = 1,
+    this.totalItems = 0,
+    this.currentMode = 'job',
+    this.currentStartDate = '',
+    this.currentEndDate = '',
   });
 
   PrintDashboardState copyWith({
@@ -35,6 +49,12 @@ class PrintDashboardState {
     Set<String>? selectedKeys,
     List<String>? availablePrinters,
     String? selectedPrinter,
+    int? currentPage,
+    int? totalPages,
+    int? totalItems,
+    String? currentMode,
+    String? currentStartDate,
+    String? currentEndDate,
   }) {
     return PrintDashboardState(
       isLoading: isLoading ?? this.isLoading,
@@ -45,12 +65,19 @@ class PrintDashboardState {
       selectedKeys: selectedKeys ?? this.selectedKeys,
       availablePrinters: availablePrinters ?? this.availablePrinters,
       selectedPrinter: selectedPrinter ?? this.selectedPrinter,
+      currentPage: currentPage ?? this.currentPage,
+      totalPages: totalPages ?? this.totalPages,
+      totalItems: totalItems ?? this.totalItems,
+      currentMode: currentMode ?? this.currentMode,
+      currentStartDate: currentStartDate ?? this.currentStartDate,
+      currentEndDate: currentEndDate ?? this.currentEndDate,
     );
   }
 }
 
 class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   final WindowsPrinterService _printerService = WindowsPrinterService();
+  final int _itemsPerPage = 25;
 
   PrintDashboardNotifier() : super(PrintDashboardState()) {
     fetchPrinters();
@@ -86,39 +113,35 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   Future<void> fetchPrinters() async {
     try {
       final printers = await _printerService.getInstalledPrinters();
-
       String? defaultPrinter;
       if (printers.isNotEmpty) {
         try {
-          defaultPrinter = printers.firstWhere(
-            (p) =>
-                p.toUpperCase().contains('LQ-310') ||
-                p.toUpperCase().contains('EPSON'),
-          );
+          defaultPrinter = printers.firstWhere((p) =>
+              p.toUpperCase().contains('LQ-310') ||
+              p.toUpperCase().contains('EPSON'));
         } catch (_) {
           defaultPrinter = printers.first;
         }
       }
-
       state = state.copyWith(
-        availablePrinters: printers,
-        selectedPrinter: defaultPrinter,
-      );
+          availablePrinters: printers, selectedPrinter: defaultPrinter);
     } catch (e) {
       state = state.copyWith(
-        isError: true,
-        statusMessage: 'ดึงรายชื่อเครื่องพิมพ์ล้มเหลว: $e',
-      );
+          isError: true, statusMessage: 'ดึงรายชื่อเครื่องพิมพ์ล้มเหลว: $e');
     }
   }
 
-  Future<void> fetchJobs(String mode, String startDate, String endDate) async {
+  Future<void> fetchJobs(String mode, String startDate, String endDate,
+      {int page = 1}) async {
     state = state.copyWith(
       isLoading: true,
       isError: false,
       statusMessage: '',
       jobs: [],
       selectedKeys: const {},
+      currentMode: mode,
+      currentStartDate: startDate,
+      currentEndDate: endDate,
     );
 
     try {
@@ -130,8 +153,8 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         "job_no": [],
         "start_date": startDate,
         "end_date": endDate,
-        "page": mode == 'job' ? 1 : "",
-        "limit": mode == 'job' ? 999 : 25
+        "page": page,
+        "limit": _itemsPerPage
       };
 
       final response = await http.post(
@@ -150,19 +173,39 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         final List<Map<String, dynamic>> typedData =
             List<Map<String, dynamic>>.from(dataList);
 
+        int total = responseData[0]['total'] != null
+            ? int.tryParse(responseData[0]['total'].toString()) ?? 0
+            : 0;
+        int calcTotalPages = 1;
+
+        if (total > 0) {
+          calcTotalPages = (total / _itemsPerPage).ceil();
+        } else {
+          calcTotalPages = dataList.length == _itemsPerPage ? page + 1 : page;
+        }
+
         state = state.copyWith(
           isLoading: false,
           jobs: typedData,
+          currentPage: page,
+          totalPages: calcTotalPages,
+          totalItems: total,
         );
       } else {
         throw Exception('API ส่งสถานะล้มเหลวกลับมา');
       }
     } catch (e) {
       state = state.copyWith(
-        isLoading: false,
-        isError: true,
-        statusMessage: 'ข้อผิดพลาดเครือข่าย: $e',
-      );
+          isLoading: false,
+          isError: true,
+          statusMessage: 'ข้อผิดพลาดเครือข่าย: $e');
+    }
+  }
+
+  void changePage(int newPage) {
+    if (newPage > 0 && newPage <= state.totalPages) {
+      fetchJobs(state.currentMode, state.currentStartDate, state.currentEndDate,
+          page: newPage);
     }
   }
 
@@ -172,12 +215,10 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           isError: true, statusMessage: 'กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
       return;
     }
-
     state = state.copyWith(
         isPrinting: true,
         isError: false,
         statusMessage: 'กำลังประมวลผลคำสั่งพิมพ์...');
-
     try {
       final itemsToPrint = state.jobs
           .asMap()
@@ -197,22 +238,16 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           : await Lq310FuelOrderBuilder().buildPrintBuffer(itemsToPrint);
 
       await _printerService.printRawData(
-        printerName: state.selectedPrinter!,
-        rawTis620Bytes: rawBytes,
-      );
+          printerName: state.selectedPrinter!, rawTis620Bytes: rawBytes);
 
       state = state.copyWith(
-        isPrinting: false,
-        isError: false,
-        statusMessage: 'ส่งคำสั่งพิมพ์เข้าเครื่องสำเร็จแล้ว!',
-        selectedKeys: const {},
-      );
+          isPrinting: false,
+          isError: false,
+          statusMessage: 'ส่งคำสั่งพิมพ์เข้าเครื่องสำเร็จแล้ว!',
+          selectedKeys: const {});
     } catch (e) {
       state = state.copyWith(
-        isPrinting: false,
-        isError: true,
-        statusMessage: 'พิมพ์ล้มเหลว: $e',
-      );
+          isPrinting: false, isError: true, statusMessage: 'พิมพ์ล้มเหลว: $e');
     }
   }
 }
