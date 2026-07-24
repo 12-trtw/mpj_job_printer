@@ -20,6 +20,7 @@ class PrintDashboardState {
   final String currentStartDate;
   final String currentEndDate;
   final String currentKeyword;
+  final int currentLimit; // [NEW] เพิ่มตัวแปรเก็บจำนวณแถวต่อหน้า
 
   PrintDashboardState({
     this.isLoading = false,
@@ -36,6 +37,7 @@ class PrintDashboardState {
     this.currentStartDate = '',
     this.currentEndDate = '',
     this.currentKeyword = '',
+    this.currentLimit = 25, // [NEW] ค่าเริ่มต้นเป็น 25
   });
 
   PrintDashboardState copyWith({
@@ -53,6 +55,7 @@ class PrintDashboardState {
     String? currentStartDate,
     String? currentEndDate,
     String? currentKeyword,
+    int? currentLimit, // [NEW]
   }) {
     return PrintDashboardState(
       isLoading: isLoading ?? this.isLoading,
@@ -69,6 +72,7 @@ class PrintDashboardState {
       currentStartDate: currentStartDate ?? this.currentStartDate,
       currentEndDate: currentEndDate ?? this.currentEndDate,
       currentKeyword: currentKeyword ?? this.currentKeyword,
+      currentLimit: currentLimit ?? this.currentLimit, // [NEW]
     );
   }
 }
@@ -76,7 +80,8 @@ class PrintDashboardState {
 class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   final PrintRepository _repository = PrintRepository();
   final WindowsPrinterService _printerService = WindowsPrinterService();
-  final int _itemsPerPage = 25;
+
+  // [REMOVED] ลบ _itemsPerPage ที่เป็นค่าคงที่ออกไป เพื่อใช้ currentLimit ใน State แทน
 
   PrintDashboardNotifier() : super(PrintDashboardState()) {
     fetchPrinters();
@@ -137,12 +142,14 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     }
   }
 
+  // [MODIFIED] เพิ่มการรับค่า limit เข้ามาที่ฟังก์ชัน
   Future<void> fetchJobs({
     required String mode,
     required String startDate,
     required String endDate,
     String keyword = '',
     int page = 1,
+    int limit = 25,
   }) async {
     state = state.copyWith(
       isLoading: true,
@@ -153,6 +160,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       currentStartDate: startDate,
       currentEndDate: endDate,
       currentKeyword: keyword,
+      currentLimit: limit, // [NEW] จดจำค่า limit ที่ผู้ใช้เลือกไว้
     );
 
     try {
@@ -161,12 +169,11 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         startDate: startDate,
         endDate: endDate,
         page: page,
-        limit: _itemsPerPage,
+        limit: limit, // [MODIFIED] ส่ง limit เข้า API แทนค่าคงที่
         keyword: keyword,
       );
 
       final List<dynamic> dataList = response['data'] ?? [];
-
       final int totalPages = response['total_pages'] ?? 1;
       final int totalItems = response['total_items'] ?? 0;
 
@@ -185,6 +192,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     }
   }
 
+  // [MODIFIED] อัปเดตให้ส่งค่า limit เดิมไปเวลาผู้ใช้กดเปลี่ยนหน้า
   void changePage(int newPage) {
     if (newPage > 0 && newPage <= state.totalPages) {
       fetchJobs(
@@ -193,6 +201,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         endDate: state.currentEndDate,
         keyword: state.currentKeyword,
         page: newPage,
+        limit: state.currentLimit, // โยน limit ที่จำไว้เข้าไป
       );
     }
   }
