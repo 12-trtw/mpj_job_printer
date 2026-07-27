@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mpj_job_printer/src/features/presentation/controller/print_controller.dart';
@@ -46,25 +47,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
-  // เทียบสีแถวตามสถานะ
   Color _getRowColor(Map<String, dynamic> data) {
     final fleetStatus = data['fleet_status']?.toString();
-    if (fleetStatus == '99') return const Color(0xFFF3F4F6); // Cancel
+    if (fleetStatus == '99') return const Color(0xFFF3F4F6);
     if (data['shipto_status']?.toString() == '99')
-      return const Color(0xFFFEF3C7); // Hold
-    if (fleetStatus == '5') return const Color(0xFFD1FAE5); // Approved
-    if (fleetStatus == '100') return const Color(0xFFDBEAFE); // Completed
-    if (fleetStatus == '95') return const Color(0xFFCCFBF1); // Delivered
-    if (fleetStatus == '10') return const Color(0xFFF3E8FF); // Billing
+      return const Color(0xFFFEF3C7);
+    if (fleetStatus == '5') return const Color(0xFFD1FAE5);
+    if (fleetStatus == '100') return const Color(0xFFDBEAFE);
+    if (fleetStatus == '95') return const Color(0xFFCCFBF1);
+    if (fleetStatus == '10') return const Color(0xFFF3E8FF);
     if (fleetStatus == '0' && data['job_end'] != null) {
       try {
         if (DateTime.parse(data['job_end'].toString())
             .isBefore(DateTime.now())) {
-          return const Color(0xFFFEE2E2); // Overtime
+          return const Color(0xFFFEE2E2);
         }
       } catch (_) {}
     }
-    // สีครีม/ส้มอ่อน เป็นค่าเริ่มต้น (รอจัดรถ) แบบในรูป
     return const Color(0xFFFDE68A).withOpacity(0.3);
   }
 
@@ -87,9 +86,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // =======================================
-          // 1. Header (สีส้ม TMS)
-          // =======================================
           Container(
             height: 55,
             color: const Color(0xFFF97316),
@@ -112,10 +108,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ],
             ),
           ),
-
-          // =======================================
-          // 2. Toolbar & Data Table
-          // =======================================
           Expanded(
             child: Container(
               margin: const EdgeInsets.all(16),
@@ -129,51 +121,122 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // --- ปุ่มเลือกโหมด และ ตัวกรอง ---
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildModeButton(
-                              title: '📋 รายการ JOB',
-                              color: const Color(0xFF2563EB), // สีน้ำเงิน
-                              isSelected: _selectedMode == 'job',
-                              onTap: () {
-                                setState(() => _selectedMode = 'job');
-                                _fetchData(notifier);
-                              },
+                            Row(
+                              children: [
+                                _buildModeButton(
+                                  title: '📋 รายการ JOB',
+                                  color: const Color(0xFF2563EB),
+                                  isSelected: _selectedMode == 'job',
+                                  onTap: () {
+                                    setState(() => _selectedMode = 'job');
+                                    _fetchData(notifier);
+                                  },
+                                ),
+                                const SizedBox(width: 12),
+                                _buildModeButton(
+                                  title: '⛽ รายการเติมน้ำมัน',
+                                  color: const Color(0xFF10B981),
+                                  isSelected: _selectedMode == 'fuel',
+                                  onTap: () {
+                                    setState(() => _selectedMode = 'fuel');
+                                    _fetchData(notifier);
+                                  },
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            _buildModeButton(
-                              title: '⛽ รายการเติมน้ำมัน',
-                              color: const Color(0xFF10B981), // สีเขียว
-                              isSelected: _selectedMode == 'fuel',
-                              onTap: () {
-                                setState(() => _selectedMode = 'fuel');
-                                _fetchData(notifier);
-                              },
+                            Row(
+                              children: [
+                                const Icon(Icons.print,
+                                    color: Colors.grey, size: 20),
+                                const SizedBox(width: 8),
+                                Container(
+                                  height: 35,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: Colors.grey.shade400),
+                                      borderRadius: BorderRadius.circular(4)),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: state.selectedPrinter,
+                                      hint: const Text('เลือกเครื่องพิมพ์...'),
+                                      items: state.availablePrinters
+                                          .map((p) => DropdownMenuItem(
+                                              value: p,
+                                              child: Text(p,
+                                                  style: const TextStyle(
+                                                      fontSize: 13))))
+                                          .toList(),
+                                      onChanged: notifier.setPrinter,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFF97316),
+                                      foregroundColor: Colors.white,
+                                      fixedSize: const Size.fromHeight(35)),
+                                  onPressed: (state.selectedKeys.isEmpty ||
+                                          state.isPrinting)
+                                      ? null
+                                      : () => notifier.printSelectedJobs(),
+                                  icon: state.isPrinting
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white))
+                                      : const Icon(Icons.print, size: 16),
+                                  label: Text(
+                                      'ปริ้นที่เลือก (${state.selectedKeys.length})',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                         const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          crossAxisAlignment: WrapCrossAlignment.center,
+                        Row(
                           children: [
                             _buildDateInput(_startDateCtrl, 'ตั้งแต่วันที่'),
-                            const Text('-'),
+                            const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                child: Text('-')),
                             _buildDateInput(_endDateCtrl, 'ถึงวันที่'),
+                            const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blueGrey,
+                                  foregroundColor: Colors.white,
+                                  fixedSize: const Size.fromHeight(35)),
+                              onPressed: state.isLoading
+                                  ? null
+                                  : () => _fetchData(notifier),
+                              icon: const Icon(Icons.filter_alt, size: 16),
+                              label: const Text('กรองวันที่',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                            const Spacer(),
                             SizedBox(
-                              width: 200,
+                              width: 250,
                               height: 35,
                               child: TextField(
                                 controller: _keywordCtrl,
                                 decoration: const InputDecoration(
-                                    labelText: 'ค้นหา...',
+                                    labelText: 'ค้นหา (Job/ทะเบียน)...',
                                     isDense: true,
                                     border: OutlineInputBorder(),
                                     prefixIcon: Icon(Icons.search, size: 18)),
@@ -181,6 +244,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 onSubmitted: (_) => _fetchData(notifier),
                               ),
                             ),
+                            const SizedBox(width: 8),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.blue.shade700,
@@ -200,33 +264,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                             ),
-                            const SizedBox(width: 20),
-                            const Icon(Icons.print,
-                                color: Colors.grey, size: 20),
-                            const SizedBox(width: 8),
-                            Container(
-                              height: 35,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                  border:
-                                      Border.all(color: Colors.grey.shade400),
-                                  borderRadius: BorderRadius.circular(4)),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: state.selectedPrinter,
-                                  hint: const Text('เลือกเครื่องพิมพ์...'),
-                                  items: state.availablePrinters
-                                      .map((p) => DropdownMenuItem(
-                                          value: p,
-                                          child: Text(p,
-                                              style: const TextStyle(
-                                                  fontSize: 13))))
-                                      .toList(),
-                                  onChanged: notifier.setPrinter,
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                         if (state.statusMessage.isNotEmpty)
@@ -242,8 +279,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ],
                     ),
                   ),
-
-                  // --- ตารางข้อมูล ---
                   Expanded(
                     child: state.isLoading
                         ? const Center(child: CircularProgressIndicator())
@@ -254,12 +289,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             : SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: SizedBox(
-                                  width: _selectedMode == 'job'
-                                      ? 2550
-                                      : 1150, // ความกว้างตารางให้พอดีกับหัวข้อ
+                                  width: _selectedMode == 'job' ? 2600 : 1200,
                                   child: Column(
                                     children: [
-                                      _buildTableHeader(),
+                                      _buildTableHeader(state, notifier),
                                       Expanded(
                                         child: ListView.builder(
                                           itemCount: state.jobs.length,
@@ -272,17 +305,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                     index +
                                                     1;
 
+                                            final refId = item['job_no'] ??
+                                                item['fleet_id'] ??
+                                                index.toString();
+                                            final uniqueKey = '${refId}_$index';
+                                            final isSelected = state
+                                                .selectedKeys
+                                                .contains(uniqueKey);
+
                                             return _selectedMode == 'job'
                                                 ? _buildJobRow(
+                                                    context,
                                                     item,
                                                     globalIndex,
                                                     rowColor,
-                                                    notifier)
+                                                    notifier,
+                                                    uniqueKey,
+                                                    isSelected)
                                                 : _buildFuelRow(
+                                                    context,
                                                     item,
                                                     globalIndex,
                                                     rowColor,
-                                                    notifier);
+                                                    notifier,
+                                                    uniqueKey,
+                                                    isSelected);
                                           },
                                         ),
                                       ),
@@ -291,8 +338,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 ),
                               ),
                   ),
-
-                  // --- Pagination Bar ---
                   if (state.jobs.isNotEmpty && !state.isLoading)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -393,9 +438,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  // =======================================
-  // ระบบ Pop-up ก่อนพิมพ์ (ดึงข้อมูลเจาะลึก)
-  // =======================================
   void _showPreviewAndPrint(
       String? jobNo, PrintDashboardNotifier notifier) async {
     if (jobNo == null || jobNo.isEmpty) return;
@@ -407,24 +449,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       return;
     }
 
-    // 1. แสดงกล่องโหลด
     showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => const Center(child: CircularProgressIndicator()));
 
     try {
-      // 2. ดึงข้อมูลแบบเจาะลึก
       final previewData =
           await notifier.getPrintPreviewData(_selectedMode, jobNo);
       if (!mounted) return;
-      Navigator.pop(context); // ปิดกล่องโหลด
+      Navigator.pop(context);
 
       if (previewData == null || previewData.isEmpty)
         throw Exception('ไม่พบข้อมูลสำหรับปริ้น');
       final detail = previewData.first;
-
-      // 3. แสดง Pop-up ยืนยันการปริ้น
       showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -471,8 +509,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         foregroundColor: Colors.white),
                     onPressed: () {
                       Navigator.pop(ctx);
-                      notifier.executePrint(_selectedMode,
-                          previewData); // ส่งข้อมูลที่โหลดมาเข้าปริ้นเตอร์
+                      notifier.executePrint(_selectedMode, previewData);
                     },
                     icon: const Icon(Icons.print, size: 18),
                     label: const Text('ยืนยันสั่งพิมพ์'),
@@ -481,7 +518,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ));
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context); // ปิดกล่องโหลด
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
@@ -506,7 +543,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  // --- ปุ่มเลือกโหมด ---
   Widget _buildModeButton(
       {required String title,
       required Color color,
@@ -538,17 +574,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  // --- หัวตาราง ---
-  Widget _buildTableHeader() {
+  Widget _buildTableHeader(
+      PrintDashboardState state, PrintDashboardNotifier notifier) {
+    bool isAllSelected =
+        state.jobs.isNotEmpty && state.selectedKeys.length == state.jobs.length;
+
     return Container(
       height: 40,
       decoration: BoxDecoration(
           color: const Color(0xFF94A3B8),
-          border:
-              Border.all(color: Colors.grey.shade400)), // สีฟ้าอมเทาแบบในรูป
+          border: Border.all(color: Colors.grey.shade400)),
       child: _selectedMode == 'job'
           ? Row(
               children: [
+                _hCell(50, '',
+                    child: Checkbox(
+                        value: isAllSelected,
+                        onChanged: (v) => notifier.selectAll(v ?? false),
+                        activeColor: const Color(0xFFF97316))),
                 _hCell(50, 'NO#'),
                 _hCell(130, 'JOB NO'),
                 _hCell(120, 'Job start'),
@@ -574,6 +617,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             )
           : Row(
               children: [
+                _hCell(50, '',
+                    child: Checkbox(
+                        value: isAllSelected,
+                        onChanged: (v) => notifier.selectAll(v ?? false),
+                        activeColor: const Color(0xFFF97316))),
                 _hCell(50, 'No#'),
                 _hCell(130, 'Job no'),
                 _hCell(120, 'job start'),
@@ -589,63 +637,98 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  // --- แถวตารางโหมด JOB ---
-  Widget _buildJobRow(Map<String, dynamic> item, int globalIndex,
-      Color rowColor, PrintDashboardNotifier notifier) {
+  Widget _buildJobRow(
+      BuildContext context,
+      Map<String, dynamic> item,
+      int globalIndex,
+      Color rowColor,
+      PrintDashboardNotifier notifier,
+      String uniqueKey,
+      bool isSelected) {
     return Container(
-      height: 45,
+      constraints: const BoxConstraints(minHeight: 45),
       decoration: BoxDecoration(
-          color: rowColor,
+          color: isSelected ? const Color(0xFFEFF6FF) : rowColor,
           border: Border(
               bottom: BorderSide(color: Colors.grey.shade300, width: 0.5))),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _dCell(50, globalIndex.toString(), align: Alignment.center),
-          _dCell(130, item['job_no']),
-          _dCell(120, _formatDateTime(item['job_start'])),
-          _dCell(120, _formatDateTime(item['job_end'])),
-          _dCell(150, item['type_name'] ?? item['job_type_name']),
-          _dCell(120, item['vessel']),
-          _dCell(120, item['booking_bl']),
-          _dCell(110, item['container_size']),
-          _dCell(120, item['container_no']),
-          _dCell(100, item['seal_no'] ?? '-'),
-          _dCell(100, item['vehicle_name']),
-          _dCell(150, item['driver_name'] ?? item['driver'], link: true),
-          _dCell(110, item['trailer_name'] ?? '-', link: true),
-          _dCell(200, item['customer_name']),
-          _dCell(150, item['consignee_name'] ?? '-'),
-          _dCell(120, item['route_master_name']),
-          _dCell(150, item['route_stations'] ?? item['station_place'] ?? '-'),
-          _dCell(100, item['create_by'] ?? '-'),
-          _dCell(120, _formatDateTime(item['create_date'])),
-          _dCell(120, _formatDateTime(item['update_date'])),
+          Container(
+            width: 50,
+            padding: const EdgeInsets.only(top: 4),
+            alignment: Alignment.topCenter,
+            child: Checkbox(
+                value: isSelected,
+                onChanged: (_) => notifier.toggleSelection(uniqueKey),
+                activeColor: const Color(0xFFF97316)),
+          ),
+          _dCell(context, 50, globalIndex.toString(),
+              align: Alignment.topCenter),
+          _dCell(context, 130, item['job_no']),
+          _dCell(context, 120, _formatDateTime(item['job_start'])),
+          _dCell(context, 120, _formatDateTime(item['job_end'])),
+          _dCell(context, 150, item['type_name'] ?? item['job_type_name']),
+          _dCell(context, 120, item['vessel']),
+          _dCell(context, 120, item['booking_bl']),
+          _dCell(context, 110, item['container_size']),
+          _dCell(context, 120, item['container_no']),
+          _dCell(context, 100, item['seal_no'] ?? '-'),
+          _dCell(context, 100, item['vehicle_name']),
+          _dCell(context, 150, item['driver_name'] ?? item['driver'],
+              link: true),
+          _dCell(context, 110, item['trailer_name'] ?? '-', link: true),
+          _dCell(context, 200, item['customer_name']),
+          _dCell(context, 150, item['consignee_name'] ?? '-'),
+          _dCell(context, 120, item['route_master_name']),
+          _dCell(context, 150,
+              item['route_stations'] ?? item['station_place'] ?? '-'),
+          _dCell(context, 100, item['create_by'] ?? '-'),
+          _dCell(context, 120, _formatDateTime(item['create_date'])),
+          _dCell(context, 120, _formatDateTime(item['update_date'])),
           _actionCell(60, () => _showPreviewAndPrint(item['job_no'], notifier)),
         ],
       ),
     );
   }
 
-  // --- แถวตารางโหมด FUEL ---
-  Widget _buildFuelRow(Map<String, dynamic> item, int globalIndex,
-      Color rowColor, PrintDashboardNotifier notifier) {
+  Widget _buildFuelRow(
+      BuildContext context,
+      Map<String, dynamic> item,
+      int globalIndex,
+      Color rowColor,
+      PrintDashboardNotifier notifier,
+      String uniqueKey,
+      bool isSelected) {
     return Container(
-      height: 45,
+      constraints: const BoxConstraints(minHeight: 45),
       decoration: BoxDecoration(
-          color: rowColor,
+          color: isSelected ? const Color(0xFFEFF6FF) : rowColor,
           border: Border(
               bottom: BorderSide(color: Colors.grey.shade300, width: 0.5))),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _dCell(50, globalIndex.toString(), align: Alignment.center),
-          _dCell(130, item['job_no']),
-          _dCell(120, _formatDateTime(item['job_start'])),
-          _dCell(100, item['vehicle_name']),
-          _dCell(150, item['driver_name'] ?? item['driver']),
-          _dCell(100, '${item['fuel_qty'] ?? 0} L'),
-          _dCell(150, item['type_name'] ?? item['job_type_name']),
-          _dCell(120, item['route_master_name']),
-          _dCell(150, item['drop_point'] ?? item['route_stations'] ?? '-'),
+          Container(
+            width: 50,
+            padding: const EdgeInsets.only(top: 4),
+            alignment: Alignment.topCenter,
+            child: Checkbox(
+                value: isSelected,
+                onChanged: (_) => notifier.toggleSelection(uniqueKey),
+                activeColor: const Color(0xFFF97316)),
+          ),
+          _dCell(context, 50, globalIndex.toString(),
+              align: Alignment.topCenter),
+          _dCell(context, 130, item['job_no']),
+          _dCell(context, 120, _formatDateTime(item['job_start'])),
+          _dCell(context, 100, item['vehicle_name']),
+          _dCell(context, 150, item['driver_name'] ?? item['driver']),
+          _dCell(context, 100, '${item['fuel_qty'] ?? 0} L'),
+          _dCell(context, 150, item['type_name'] ?? item['job_type_name']),
+          _dCell(context, 120, item['route_master_name']),
+          _dCell(context, 150,
+              item['drop_point'] ?? item['route_stations'] ?? '-'),
           _actionCell(60, () => _showPreviewAndPrint(item['job_no'], notifier)),
         ],
       ),
@@ -653,38 +736,56 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _hCell(double w, String text,
-      {Alignment align = Alignment.centerLeft}) {
+      {Alignment align = Alignment.centerLeft, Widget? child}) {
     return Container(
       width: w,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       alignment: align,
-      child: Text(text,
-          style: const TextStyle(
-              fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
+      child: child ??
+          Text(text,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Colors.white)),
     );
   }
 
-  Widget _dCell(double w, dynamic text,
-      {bool link = false, Alignment align = Alignment.centerLeft}) {
+  Widget _dCell(BuildContext context, double w, dynamic text,
+      {bool link = false, Alignment align = Alignment.topLeft}) {
     final str = text?.toString() ?? '-';
     return Container(
       width: w,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       alignment: align,
-      child: Text(str,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-              fontSize: 12,
-              color: link ? Colors.blue.shade700 : Colors.black87,
-              decoration: link ? TextDecoration.underline : null)),
+      child: Tooltip(
+        message: 'คลิกเพื่อคัดลอก',
+        child: InkWell(
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: str));
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('คัดลอก "$str" ลงคลิปบอร์ดแล้ว',
+                  style: const TextStyle(fontFamily: 'Sarabun')),
+              duration: const Duration(seconds: 1),
+              backgroundColor: Colors.green.shade600,
+            ));
+          },
+          child: Text(str,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: link ? Colors.blue.shade700 : Colors.black87,
+                  decoration: link ? TextDecoration.underline : null,
+                  height: 1.5)),
+        ),
+      ),
     );
   }
 
   Widget _actionCell(double w, VoidCallback onTap) {
     return Container(
       width: w,
-      alignment: Alignment.center,
+      padding: const EdgeInsets.only(top: 8),
+      alignment: Alignment.topCenter,
       child: InkWell(
         onTap: onTap,
         child: Container(
