@@ -1,18 +1,15 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpj_job_printer/src/services/windows_printer_service.dart';
 import 'package:mpj_job_printer/src/features/utils/print/data/datasources/lq310_form_builder.dart';
 import 'package:mpj_job_printer/src/features/utils/print/data/datasources/lq310_fuel_builder.dart';
-import 'package:mpj_job_printer/src/features/print_dashboard/data/repositories/print_repository.dart';
 
 class PrintDashboardState {
   final bool isLoading;
   final bool isPrinting;
   final String statusMessage;
   final List<Map<String, dynamic>> jobs;
-  final Set<String> selectedKeys;
   final List<String> availablePrinters;
   final String? selectedPrinter;
 
@@ -30,7 +27,6 @@ class PrintDashboardState {
     this.isPrinting = false,
     this.statusMessage = '',
     this.jobs = const [],
-    this.selectedKeys = const {},
     this.availablePrinters = const [],
     this.selectedPrinter,
     this.currentPage = 1,
@@ -48,7 +44,6 @@ class PrintDashboardState {
     bool? isPrinting,
     String? statusMessage,
     List<Map<String, dynamic>>? jobs,
-    Set<String>? selectedKeys,
     List<String>? availablePrinters,
     String? selectedPrinter,
     int? currentPage,
@@ -65,7 +60,6 @@ class PrintDashboardState {
       isPrinting: isPrinting ?? this.isPrinting,
       statusMessage: statusMessage ?? this.statusMessage,
       jobs: jobs ?? this.jobs,
-      selectedKeys: selectedKeys ?? this.selectedKeys,
       availablePrinters: availablePrinters ?? this.availablePrinters,
       selectedPrinter: selectedPrinter ?? this.selectedPrinter,
       currentPage: currentPage ?? this.currentPage,
@@ -81,7 +75,6 @@ class PrintDashboardState {
 }
 
 class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
-  final PrintRepository _repository = PrintRepository();
   final WindowsPrinterService _printerService = WindowsPrinterService();
 
   PrintDashboardNotifier() : super(PrintDashboardState()) {
@@ -92,57 +85,28 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     state = state.copyWith(selectedPrinter: printerName);
   }
 
-  void toggleSelection(String key) {
-    final newKeys = Set<String>.from(state.selectedKeys);
-    if (newKeys.contains(key)) {
-      newKeys.remove(key);
-    } else {
-      newKeys.add(key);
-    }
-    state = state.copyWith(selectedKeys: newKeys);
-  }
-
-  void selectAll(bool select) {
-    if (select) {
-      final keys = state.jobs.asMap().entries.map((e) {
-        final item = e.value;
-        final refId = item['job_no'] ?? item['fleet_id'] ?? e.key.toString();
-        return '${refId}_${e.key}';
-      }).toSet();
-      state = state.copyWith(selectedKeys: keys);
-    } else {
-      state = state.copyWith(selectedKeys: const {});
-    }
-  }
-
   Future<void> fetchPrinters() async {
     try {
       final printers = await _printerService.getInstalledPrinters();
-
       String? defaultPrinter;
       if (printers.isNotEmpty) {
         try {
-          defaultPrinter = printers.firstWhere(
-            (p) =>
-                p.toUpperCase().contains('LQ-310') ||
-                p.toUpperCase().contains('EPSON'),
-          );
+          defaultPrinter = printers.firstWhere((p) =>
+              p.toUpperCase().contains('LQ-310') ||
+              p.toUpperCase().contains('EPSON'));
         } catch (_) {
           defaultPrinter = printers.first;
         }
       }
-
       state = state.copyWith(
-        availablePrinters: printers,
-        selectedPrinter: defaultPrinter,
-      );
+          availablePrinters: printers, selectedPrinter: defaultPrinter);
     } catch (e) {
-      state = state.copyWith(
-        statusMessage: ' ดึงรายชื่อเครื่องพิมพ์ล้มเหลว: $e',
-      );
+      state =
+          state.copyWith(statusMessage: '❌ ดึงรายชื่อเครื่องพิมพ์ล้มเหลว: $e');
     }
   }
 
+  // --- 1. ฟังก์ชันสำหรับโหลดตาราง (ภาพรวม) ---
   Future<void> fetchJobs({
     required String mode,
     required String startDate,
@@ -155,7 +119,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       isLoading: true,
       statusMessage: '',
       jobs: [],
-      selectedKeys: const {},
       currentMode: mode,
       currentStartDate: startDate,
       currentEndDate: endDate,
@@ -164,18 +127,61 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     );
 
     try {
-      final response = await _repository.fetchReportData(
-        mode: mode,
-        startDate: startDate,
-        endDate: endDate,
-        page: page,
-        limit: limit,
-        keyword: keyword,
-      );
+      final String apiUrl = mode == 'job'
+          ? 'http://tmsthai.com:9100/mpj-v1/report/order-job'
+          : 'http://tmsthai.com:9100/mpj-v1/report/order-fuel';
 
-      final List<dynamic> dataList = response['data'] ?? [];
-      final int totalPages = response['total_pages'] ?? 1;
-      final int totalItems = response['total_items'] ?? 0;
+      // โครงสร้าง Payload แยกตามโหมด
+      final List<Map<String, dynamic>> payload = mode == 'job'
+          ? [
+              {
+                "start_date": startDate,
+                "end_date": endDate,
+                "page": page,
+                "limit": limit,
+                "approve_status": "",
+                "cost_status": "",
+                "keyword": keyword
+              }
+            ]
+          : [
+              {
+                "job_no": [],
+                "start_date": startDate,
+                "end_date": endDate,
+                "page": page,
+                "limit": limit
+              }
+            ];
+
+      final response = await http
+          .post(
+            Uri.parse(apiUrl),
+            headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode != 200)
+        throw Exception('API Error: ${response.statusCode}');
+
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      List<dynamic> dataList = [];
+      int totalPages = 1;
+      int totalItems = 0;
+
+      // จัดการโครงสร้าง JSON (order-job เป็น Object ส่วน order-fuel เป็น Array)
+      if (decoded is Map && decoded['status'] == 'success') {
+        dataList = decoded['data'] ?? [];
+        totalPages = decoded['total_pages'] ?? 1;
+        totalItems = decoded['total_items'] ?? 0;
+      } else if (decoded is List &&
+          decoded.isNotEmpty &&
+          decoded[0]['status'] == 'success') {
+        dataList = decoded[0]['data'] ?? [];
+        totalPages = decoded[0]['total_pages'] ?? 1;
+        totalItems = decoded[0]['total_items'] ?? 0;
+      }
 
       state = state.copyWith(
         isLoading: false,
@@ -185,10 +191,8 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         totalItems: totalItems,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        statusMessage: ' ข้อผิดพลาด: $e',
-      );
+      state =
+          state.copyWith(isLoading: false, statusMessage: '❌ ข้อผิดพลาด: $e');
     }
   }
 
@@ -205,109 +209,77 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     }
   }
 
-  // [MODIFIED] อัปเดตฟังก์ชันนี้เพื่อดึงข้อมูลจาก job-info ก่อนพิมพ์
-  Future<void> printSelectedJobs() async {
+  // --- 2. ฟังก์ชันสำหรับโหลดข้อมูลเชิงลึก (ก่อนสั่งปริ้น) ---
+  Future<List<Map<String, dynamic>>?> getPrintPreviewData(
+      String mode, String jobNo) async {
+    try {
+      final String apiUrl = mode == 'job'
+          ? 'http://tmsthai.com:9100/mpj-v1/report/job-info'
+          : 'http://tmsthai.com:9100/mpj-v1/report/order-fuel';
+
+      final payload = [
+        {
+          "job_no": [jobNo],
+          "start_date": "",
+          "end_date": "",
+          "page": 1,
+          "limit": 25
+        }
+      ];
+
+      final response = await http
+          .post(
+            Uri.parse(apiUrl),
+            headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode != 200)
+        throw Exception('API Error: HTTP ${response.statusCode}');
+
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      List<dynamic> data = [];
+
+      if (decoded is List &&
+          decoded.isNotEmpty &&
+          decoded[0]['status'] == 'success') {
+        data = decoded[0]['data'] ?? [];
+      } else if (decoded is Map && decoded['status'] == 'success') {
+        data = decoded['data'] ?? [];
+      }
+
+      if (data.isEmpty) throw Exception('ไม่พบข้อมูลรายละเอียดจากระบบ');
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  // --- 3. ฟังก์ชันสำหรับส่งคำสั่งปริ้นเข้าเครื่อง ---
+  Future<void> executePrint(
+      String mode, List<Map<String, dynamic>> dataToPrint) async {
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
-      state = state.copyWith(statusMessage: ' กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
+      state = state.copyWith(statusMessage: '❌ กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
       return;
     }
 
     state = state.copyWith(
-      isPrinting: true,
-      statusMessage: '⏳ กำลังเตรียมข้อมูลเพื่อสั่งพิมพ์...',
-    );
-
+        isPrinting: true,
+        statusMessage: '⏳ กำลังส่งข้อมูลไปที่เครื่องพิมพ์...');
     try {
-      // 1. คัดกรองเอาเฉพาะ Job ที่ผู้ใช้ติ๊กเลือกไว้จากในตาราง
-      final itemsToPrint = state.jobs
-          .asMap()
-          .entries
-          .where((e) {
-            final refId =
-                e.value['job_no'] ?? e.value['fleet_id'] ?? e.key.toString();
-            return state.selectedKeys.contains('${refId}_${e.key}');
-          })
-          .map((e) => e.value)
-          .toList();
+      final rawBytes = mode == 'job'
+          ? await Lq310FormBuilder().buildPrintBuffer(dataToPrint)
+          : await Lq310FuelOrderBuilder().buildPrintBuffer(dataToPrint);
 
-      if (itemsToPrint.isEmpty) {
-        throw Exception('ไม่พบข้อมูลที่ต้องการพิมพ์');
-      }
-
-      Uint8List rawBytes;
-
-      if (state.currentMode == 'job') {
-        state =
-            state.copyWith(statusMessage: '⏳ กำลังดึงข้อมูลรายละเอียด Job...');
-
-        // 2. ดึงเฉพาะรหัส job_no ออกมาเป็น List
-        final List<String> jobNos = itemsToPrint
-            .map((e) => e['job_no']?.toString() ?? '')
-            .where((no) => no.isNotEmpty && no != 'null')
-            .toList();
-
-        // 3. ยิง API เส้น job-info เพื่อขอรายละเอียดเชิงลึก
-        final response = await http
-            .post(
-              Uri.parse('http://tmsthai.com:9100/mpj-v1/report/job-info'),
-              headers: {'Content-Type': 'application/json', 'license': 'mpj'},
-              body: jsonEncode([
-                {
-                  "job_no": jobNos, // ส่งอาร์เรย์ของ job_no ไปทั้งหมดทีเดียว
-                  "start_date": "",
-                  "end_date": "",
-                  "page": 1,
-                  "limit": 999
-                }
-              ]),
-            )
-            .timeout(const Duration(seconds: 20)); // ตั้ง Timeout กันค้าง
-
-        if (response.statusCode != 200) {
-          throw Exception(
-              'เซิร์ฟเวอร์ job-info ตอบกลับผิดพลาด (HTTP ${response.statusCode})');
-        }
-
-        final List<dynamic> responseData =
-            jsonDecode(utf8.decode(response.bodyBytes));
-        if (responseData.isEmpty || responseData[0]['status'] != 'success') {
-          throw Exception('API แจ้งเตือน: ไม่สามารถดึงข้อมูลรายละเอียดได้');
-        }
-
-        // 4. แปลงข้อมูลที่ได้กลับมา และส่งเข้า Builder ของเรา
-        final List<dynamic> detailedDataList = responseData[0]['data'] ?? [];
-        final List<Map<String, dynamic>> finalPrintData =
-            List<Map<String, dynamic>>.from(detailedDataList);
-
-        if (finalPrintData.isEmpty) {
-          throw Exception('ไม่พบข้อมูลรายละเอียดจากระบบ (Data Empty)');
-        }
-
-        rawBytes = await Lq310FormBuilder().buildPrintBuffer(finalPrintData);
-      } else {
-        // สำหรับโหมด Fuel ใชัข้อมูลจากหน้าจอได้เลยไม่ต้องยิงเส้นใหม่
-        rawBytes = await Lq310FuelOrderBuilder().buildPrintBuffer(itemsToPrint);
-      }
-
-      state =
-          state.copyWith(statusMessage: '⏳ กำลังส่งข้อมูลเข้าเครื่องพิมพ์...');
-
-      // 5. สั่งพิมพ์
       await _printerService.printRawData(
-        printerName: state.selectedPrinter!,
-        rawTis620Bytes: rawBytes,
-      );
-
+          printerName: state.selectedPrinter!, rawTis620Bytes: rawBytes);
       state = state.copyWith(
-        isPrinting: false,
-        statusMessage: ' ส่งคำสั่งพิมพ์เข้าเครื่องสำเร็จแล้ว!',
-        selectedKeys: const {},
-      );
+          isPrinting: false,
+          statusMessage: '✅ ส่งคำสั่งพิมพ์เข้าเครื่องสำเร็จแล้ว!');
     } catch (e) {
       state = state.copyWith(
-        isPrinting: false,
-        statusMessage: ' พิมพ์ล้มเหลว: $e',
-      );
+          isPrinting: false, statusMessage: '❌ พิมพ์ล้มเหลว: $e');
     }
   }
 }
