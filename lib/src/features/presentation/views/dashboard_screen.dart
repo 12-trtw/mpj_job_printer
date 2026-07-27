@@ -96,7 +96,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 const SizedBox(width: 12),
                 const Text('Plan Report - Print Management',
                     style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
                 const Spacer(),
@@ -104,7 +104,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 const SizedBox(width: 8),
                 Text('Administrator',
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.9), fontSize: 13)),
+                        color: Colors.white.withOpacity(0.9), fontSize: 16)),
               ],
             ),
           ),
@@ -155,10 +155,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             Row(
                               children: [
                                 const Icon(Icons.print,
-                                    color: Colors.grey, size: 20),
+                                    color: Colors.grey, size: 24),
                                 const SizedBox(width: 8),
                                 Container(
-                                  height: 35,
+                                  height: 45,
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12),
                                   decoration: BoxDecoration(
@@ -168,13 +168,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   child: DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
                                       value: state.selectedPrinter,
-                                      hint: const Text('เลือกเครื่องพิมพ์...'),
+                                      hint: const Text('เลือกเครื่องพิมพ์...',
+                                          style: TextStyle(fontSize: 16)),
                                       items: state.availablePrinters
                                           .map((p) => DropdownMenuItem(
                                               value: p,
                                               child: Text(p,
                                                   style: const TextStyle(
-                                                      fontSize: 13))))
+                                                      fontSize: 16))))
                                           .toList(),
                                       onChanged: notifier.setPrinter,
                                     ),
@@ -185,23 +186,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFFF97316),
                                       foregroundColor: Colors.white,
-                                      fixedSize: const Size.fromHeight(35)),
+                                      fixedSize: const Size.fromHeight(45)),
                                   onPressed: (state.selectedKeys.isEmpty ||
                                           state.isPrinting)
                                       ? null
-                                      : () => notifier.printSelectedJobs(),
+                                      : () =>
+                                          _showBatchPreviewAndPrint(notifier),
                                   icon: state.isPrinting
                                       ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
+                                          width: 20,
+                                          height: 20,
                                           child: CircularProgressIndicator(
                                               strokeWidth: 2,
                                               color: Colors.white))
-                                      : const Icon(Icons.print, size: 16),
+                                      : const Icon(Icons.print, size: 20),
                                   label: Text(
                                       'ปริ้นที่เลือก (${state.selectedKeys.length})',
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16)),
                                 ),
                               ],
                             ),
@@ -213,34 +216,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             _buildDateInput(_startDateCtrl, 'ตั้งแต่วันที่'),
                             const Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8),
-                                child: Text('-')),
+                                child:
+                                    Text('-', style: TextStyle(fontSize: 18))),
                             _buildDateInput(_endDateCtrl, 'ถึงวันที่'),
                             const SizedBox(width: 12),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.blueGrey,
                                   foregroundColor: Colors.white,
-                                  fixedSize: const Size.fromHeight(35)),
+                                  fixedSize: const Size.fromHeight(45)),
                               onPressed: state.isLoading
                                   ? null
                                   : () => _fetchData(notifier),
-                              icon: const Icon(Icons.filter_alt, size: 16),
+                              icon: const Icon(Icons.filter_alt, size: 20),
                               label: const Text('กรองวันที่',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
                             ),
                             const Spacer(),
                             SizedBox(
-                              width: 250,
-                              height: 35,
+                              width: 300,
+                              height: 45,
                               child: TextField(
                                 controller: _keywordCtrl,
                                 decoration: const InputDecoration(
                                     labelText: 'ค้นหา (Job/ทะเบียน)...',
                                     isDense: true,
                                     border: OutlineInputBorder(),
-                                    prefixIcon: Icon(Icons.search, size: 18)),
-                                style: const TextStyle(fontSize: 13),
+                                    prefixIcon: Icon(Icons.search, size: 20)),
+                                style: const TextStyle(fontSize: 16),
                                 onSubmitted: (_) => _fetchData(notifier),
                               ),
                             ),
@@ -249,20 +254,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.blue.shade700,
                                   foregroundColor: Colors.white,
-                                  fixedSize: const Size.fromHeight(35)),
+                                  fixedSize: const Size.fromHeight(45)),
                               onPressed: state.isLoading
                                   ? null
                                   : () => _fetchData(notifier),
                               icon: state.isLoading
                                   ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
+                                      width: 20,
+                                      height: 20,
                                       child: CircularProgressIndicator(
                                           strokeWidth: 2, color: Colors.white))
-                                  : const Icon(Icons.search, size: 16),
+                                  : const Icon(Icons.search, size: 20),
                               label: const Text('ค้นหา',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
                             ),
                           ],
                         ),
@@ -271,6 +277,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             padding: const EdgeInsets.only(top: 12),
                             child: Text(state.statusMessage,
                                 style: TextStyle(
+                                    fontSize: 16,
                                     color: state.statusMessage.contains('❌')
                                         ? Colors.red
                                         : Colors.green,
@@ -285,11 +292,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         : state.jobs.isEmpty
                             ? const Center(
                                 child: Text('ไม่มีข้อมูล',
-                                    style: TextStyle(color: Colors.grey)))
+                                    style: TextStyle(
+                                        color: Colors.grey, fontSize: 20)))
                             : SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: SizedBox(
-                                  width: _selectedMode == 'job' ? 2600 : 1200,
+                                  width: _selectedMode == 'job' ? 3900 : 1900,
                                   child: Column(
                                     children: [
                                       _buildTableHeader(state, notifier),
@@ -341,7 +349,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   if (state.jobs.isNotEmpty && !state.isLoading)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 16),
+                          vertical: 12, horizontal: 16),
                       decoration: BoxDecoration(
                           border: Border(
                               top: BorderSide(color: Colors.grey.shade300))),
@@ -351,9 +359,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           Row(
                             children: [
                               const Text('Show ',
-                                  style: TextStyle(fontSize: 13)),
+                                  style: TextStyle(fontSize: 16)),
                               Container(
-                                height: 28,
+                                height: 35,
                                 margin:
                                     const EdgeInsets.symmetric(horizontal: 8),
                                 padding:
@@ -370,7 +378,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                             value: v,
                                             child: Text('$v',
                                                 style: const TextStyle(
-                                                    fontSize: 13))))
+                                                    fontSize: 16))))
                                         .toList(),
                                     onChanged: (val) {
                                       if (val != null) {
@@ -382,7 +390,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 ),
                               ),
                               Text(' entries (Total: ${state.totalItems})',
-                                  style: const TextStyle(fontSize: 13)),
+                                  style: const TextStyle(fontSize: 16)),
                             ],
                           ),
                           Row(
@@ -393,16 +401,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                         .changePage(state.currentPage - 1)
                                     : null,
                                 style: OutlinedButton.styleFrom(
-                                    minimumSize: const Size(60, 32)),
-                                child: const Text('Prev'),
+                                    minimumSize: const Size(80, 40)),
+                                child: const Text('Prev',
+                                    style: TextStyle(fontSize: 16)),
                               ),
                               Padding(
                                 padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
+                                    const EdgeInsets.symmetric(horizontal: 16),
                                 child: Text(
                                     '${state.currentPage} / ${state.totalPages}',
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold)),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16)),
                               ),
                               OutlinedButton(
                                 onPressed: state.currentPage < state.totalPages
@@ -410,8 +420,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                         .changePage(state.currentPage + 1)
                                     : null,
                                 style: OutlinedButton.styleFrom(
-                                    minimumSize: const Size(60, 32)),
-                                child: const Text('Next'),
+                                    minimumSize: const Size(80, 40)),
+                                child: const Text('Next',
+                                    style: TextStyle(fontSize: 16)),
                               ),
                             ],
                           ),
@@ -444,7 +455,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final state = ref.read(dashboardProvider);
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('กรุณาเลือกเครื่องพิมพ์ก่อนครับ'),
+          content: Text('กรุณาเลือกเครื่องพิมพ์ก่อนครับ',
+              style: TextStyle(fontSize: 16)),
           backgroundColor: Colors.red));
       return;
     }
@@ -463,6 +475,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       if (previewData == null || previewData.isEmpty)
         throw Exception('ไม่พบข้อมูลสำหรับปริ้น');
       final detail = previewData.first;
+
       showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -470,13 +483,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   children: [
                     const Icon(Icons.print, color: Color(0xFFF97316)),
                     const SizedBox(width: 8),
-                    Text('ตัวอย่างข้อมูลก่อนพิมพ์ - $jobNo',
+                    Text('ตัวอย่างก่อนพิมพ์ - $jobNo',
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 18)),
+                            fontWeight: FontWeight.bold, fontSize: 20)),
                   ],
                 ),
                 content: SizedBox(
-                  width: 400,
+                  width: 500,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,7 +507,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             '${detail['container_size'] ?? ''} ${detail['container_no'] ?? ''}'),
                       const SizedBox(height: 16),
                       const Text('ตรวจสอบความถูกต้องแล้วกด "ยืนยันสั่งพิมพ์"',
-                          style: TextStyle(color: Colors.grey, fontSize: 13)),
+                          style: TextStyle(color: Colors.grey, fontSize: 16)),
                     ],
                   ),
                 ),
@@ -502,42 +515,160 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   TextButton(
                       onPressed: () => Navigator.pop(ctx),
                       child: const Text('ยกเลิก',
-                          style: TextStyle(color: Colors.grey))),
+                          style: TextStyle(color: Colors.grey, fontSize: 18))),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFF97316),
-                        foregroundColor: Colors.white),
+                        foregroundColor: Colors.white,
+                        fixedSize: const Size.fromHeight(45)),
                     onPressed: () {
                       Navigator.pop(ctx);
                       notifier.executePrint(_selectedMode, previewData);
                     },
-                    icon: const Icon(Icons.print, size: 18),
-                    label: const Text('ยืนยันสั่งพิมพ์'),
+                    icon: const Icon(Icons.print, size: 20),
+                    label: const Text('ยืนยันสั่งพิมพ์',
+                        style: TextStyle(fontSize: 18)),
                   )
                 ],
               ));
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString(), style: const TextStyle(fontSize: 16)),
+          backgroundColor: Colors.red));
+    }
+  }
+
+  void _showBatchPreviewAndPrint(PrintDashboardNotifier notifier) async {
+    final state = ref.read(dashboardProvider);
+    if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('กรุณาเลือกเครื่องพิมพ์ก่อนครับ',
+              style: TextStyle(fontSize: 16)),
+          backgroundColor: Colors.red));
+      return;
+    }
+
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()));
+
+    try {
+      final previewData = await notifier.getBatchPrintPreviewData();
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      if (previewData == null || previewData.isEmpty)
+        throw Exception('ไม่พบข้อมูลสำหรับปริ้น');
+
+      showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+                title: Row(
+                  children: [
+                    const Icon(Icons.print, color: Color(0xFFF97316)),
+                    const SizedBox(width: 8),
+                    Text('ตัวอย่างก่อนพิมพ์ (${previewData.length} รายการ)',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 20)),
+                  ],
+                ),
+                content: SizedBox(
+                  width: 600,
+                  height: 500,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                          'รายการต่อไปนี้จะถูกส่งเข้าเครื่องพิมพ์ตามลำดับ:',
+                          style: TextStyle(fontSize: 16)),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: previewData.length,
+                          itemBuilder: (context, index) {
+                            final detail = previewData[index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Job No: ${detail['job_no']}',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18)),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                        'ทะเบียนรถ: ${detail['vehicle_name'] ?? '-'} | คนขับ: ${detail['driver_name'] ?? detail['driver'] ?? '-'}',
+                                        style: const TextStyle(fontSize: 16)),
+                                    if (_selectedMode == 'job')
+                                      Text(
+                                          'เบอร์ตู้: ${detail['container_size'] ?? ''} ${detail['container_no'] ?? ''}',
+                                          style: const TextStyle(fontSize: 16)),
+                                    if (_selectedMode == 'fuel')
+                                      Text(
+                                          'ปริมาณน้ำมัน: ${detail['fuel_qty'] ?? 0} ลิตร',
+                                          style: const TextStyle(fontSize: 16)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('ยกเลิก',
+                          style: TextStyle(color: Colors.grey, fontSize: 18))),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF97316),
+                        foregroundColor: Colors.white,
+                        fixedSize: const Size.fromHeight(45)),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      notifier.executePrint(_selectedMode, previewData);
+                    },
+                    icon: const Icon(Icons.print, size: 20),
+                    label: const Text('ยืนยันสั่งพิมพ์ทั้งหมด',
+                        style: TextStyle(fontSize: 18)),
+                  )
+                ],
+              ));
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString(), style: const TextStyle(fontSize: 16)),
+          backgroundColor: Colors.red));
     }
   }
 
   Widget _previewText(String label, dynamic value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-              width: 100,
+              width: 120,
               child: Text(label,
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey))),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                      fontSize: 18))),
           Expanded(
               child: Text(value?.toString() ?? '-',
-                  style: const TextStyle(fontWeight: FontWeight.bold))),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18))),
         ],
       ),
     );
@@ -551,7 +682,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? color : Colors.white,
           border: Border.all(color: color),
@@ -569,7 +700,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             style: TextStyle(
                 color: isSelected ? Colors.white : color,
                 fontWeight: FontWeight.bold,
-                fontSize: 14)),
+                fontSize: 16)),
       ),
     );
   }
@@ -580,58 +711,58 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         state.jobs.isNotEmpty && state.selectedKeys.length == state.jobs.length;
 
     return Container(
-      height: 40,
+      height: 60,
       decoration: BoxDecoration(
           color: const Color(0xFF94A3B8),
           border: Border.all(color: Colors.grey.shade400)),
       child: _selectedMode == 'job'
           ? Row(
               children: [
-                _hCell(50, '',
+                _hCell(70, '',
                     child: Checkbox(
                         value: isAllSelected,
                         onChanged: (v) => notifier.selectAll(v ?? false),
                         activeColor: const Color(0xFFF97316))),
-                _hCell(50, 'NO#'),
-                _hCell(130, 'JOB NO'),
-                _hCell(120, 'Job start'),
-                _hCell(120, 'Job End'),
-                _hCell(150, 'Job Type'),
-                _hCell(120, 'Vessel'),
-                _hCell(120, 'Booking BL'),
-                _hCell(110, 'Contrainer Size'),
-                _hCell(120, 'Contrainer No'),
-                _hCell(100, 'Seal No'),
-                _hCell(100, 'Plate'),
-                _hCell(150, 'Driver'),
-                _hCell(110, 'traller Plate'),
-                _hCell(200, 'customer'),
-                _hCell(150, 'Consignee'),
-                _hCell(120, 'Route'),
-                _hCell(150, 'Drop'),
-                _hCell(100, 'Created By'),
-                _hCell(120, 'Created Date'),
-                _hCell(120, 'Update Date'),
-                _hCell(60, 'Print', align: Alignment.center),
+                _hCell(80, 'NO#'),
+                _hCell(180, 'JOB NO'),
+                _hCell(180, 'Job start'),
+                _hCell(180, 'Job End'),
+                _hCell(240, 'Job Type'),
+                _hCell(160, 'Vessel'),
+                _hCell(160, 'Booking BL'),
+                _hCell(160, 'Contrainer Size'),
+                _hCell(180, 'Contrainer No'),
+                _hCell(140, 'Seal No'),
+                _hCell(140, 'Plate'),
+                _hCell(240, 'Driver'),
+                _hCell(160, 'traller Plate'),
+                _hCell(300, 'customer'),
+                _hCell(250, 'Consignee'),
+                _hCell(220, 'Route'),
+                _hCell(250, 'Drop'),
+                _hCell(180, 'Created By'),
+                _hCell(180, 'Created Date'),
+                _hCell(180, 'Update Date'),
+                _hCell(100, 'Print', align: Alignment.center),
               ],
             )
           : Row(
               children: [
-                _hCell(50, '',
+                _hCell(70, '',
                     child: Checkbox(
                         value: isAllSelected,
                         onChanged: (v) => notifier.selectAll(v ?? false),
                         activeColor: const Color(0xFFF97316))),
-                _hCell(50, 'No#'),
-                _hCell(130, 'Job no'),
-                _hCell(120, 'job start'),
-                _hCell(100, 'ทะเบียนรถ'),
-                _hCell(150, 'พนักงานขับรถ'),
-                _hCell(100, 'ปริมาณน้ำมัน'),
-                _hCell(150, 'JOB Type'),
-                _hCell(120, 'Route'),
-                _hCell(150, 'drop'),
-                _hCell(60, 'Print', align: Alignment.center),
+                _hCell(80, 'No#'),
+                _hCell(180, 'Job no'),
+                _hCell(180, 'job start'),
+                _hCell(140, 'ทะเบียนรถ'),
+                _hCell(240, 'พนักงานขับรถ'),
+                _hCell(140, 'ปริมาณน้ำมัน'),
+                _hCell(240, 'JOB Type'),
+                _hCell(220, 'Route'),
+                _hCell(250, 'drop'),
+                _hCell(100, 'Print', align: Alignment.center),
               ],
             ),
     );
@@ -646,7 +777,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       String uniqueKey,
       bool isSelected) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 45),
+      constraints: const BoxConstraints(minHeight: 65),
       decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFEFF6FF) : rowColor,
           border: Border(
@@ -655,38 +786,39 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 50,
-            padding: const EdgeInsets.only(top: 4),
+            width: 70,
+            padding: const EdgeInsets.only(top: 8),
             alignment: Alignment.topCenter,
             child: Checkbox(
                 value: isSelected,
                 onChanged: (_) => notifier.toggleSelection(uniqueKey),
                 activeColor: const Color(0xFFF97316)),
           ),
-          _dCell(context, 50, globalIndex.toString(),
+          _dCell(context, 80, globalIndex.toString(),
               align: Alignment.topCenter),
-          _dCell(context, 130, item['job_no']),
-          _dCell(context, 120, _formatDateTime(item['job_start'])),
-          _dCell(context, 120, _formatDateTime(item['job_end'])),
-          _dCell(context, 150, item['type_name'] ?? item['job_type_name']),
-          _dCell(context, 120, item['vessel']),
-          _dCell(context, 120, item['booking_bl']),
-          _dCell(context, 110, item['container_size']),
-          _dCell(context, 120, item['container_no']),
-          _dCell(context, 100, item['seal_no'] ?? '-'),
-          _dCell(context, 100, item['vehicle_name']),
-          _dCell(context, 150, item['driver_name'] ?? item['driver'],
+          _dCell(context, 180, item['job_no']),
+          _dCell(context, 180, _formatDateTime(item['job_start'])),
+          _dCell(context, 180, _formatDateTime(item['job_end'])),
+          _dCell(context, 240, item['type_name'] ?? item['job_type_name']),
+          _dCell(context, 160, item['vessel']),
+          _dCell(context, 160, item['booking_bl']),
+          _dCell(context, 160, item['container_size']),
+          _dCell(context, 180, item['container_no']),
+          _dCell(context, 140, item['seal_no'] ?? '-'),
+          _dCell(context, 140, item['vehicle_name']),
+          _dCell(context, 240, item['driver_name'] ?? item['driver'],
               link: true),
-          _dCell(context, 110, item['trailer_name'] ?? '-', link: true),
-          _dCell(context, 200, item['customer_name']),
-          _dCell(context, 150, item['consignee_name'] ?? '-'),
-          _dCell(context, 120, item['route_master_name']),
-          _dCell(context, 150,
+          _dCell(context, 160, item['trailer_name'] ?? '-', link: true),
+          _dCell(context, 300, item['customer_name']),
+          _dCell(context, 250, item['consignee_name'] ?? '-'),
+          _dCell(context, 220, item['route_master_name']),
+          _dCell(context, 250,
               item['route_stations'] ?? item['station_place'] ?? '-'),
-          _dCell(context, 100, item['create_by'] ?? '-'),
-          _dCell(context, 120, _formatDateTime(item['create_date'])),
-          _dCell(context, 120, _formatDateTime(item['update_date'])),
-          _actionCell(60, () => _showPreviewAndPrint(item['job_no'], notifier)),
+          _dCell(context, 180, item['create_by'] ?? '-'),
+          _dCell(context, 180, _formatDateTime(item['create_date'])),
+          _dCell(context, 180, _formatDateTime(item['update_date'])),
+          _actionCell(
+              100, () => _showPreviewAndPrint(item['job_no'], notifier)),
         ],
       ),
     );
@@ -701,7 +833,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       String uniqueKey,
       bool isSelected) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 45),
+      constraints: const BoxConstraints(minHeight: 65),
       decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFEFF6FF) : rowColor,
           border: Border(
@@ -710,26 +842,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 50,
-            padding: const EdgeInsets.only(top: 4),
+            width: 70,
+            padding: const EdgeInsets.only(top: 8),
             alignment: Alignment.topCenter,
             child: Checkbox(
                 value: isSelected,
                 onChanged: (_) => notifier.toggleSelection(uniqueKey),
                 activeColor: const Color(0xFFF97316)),
           ),
-          _dCell(context, 50, globalIndex.toString(),
+          _dCell(context, 80, globalIndex.toString(),
               align: Alignment.topCenter),
-          _dCell(context, 130, item['job_no']),
-          _dCell(context, 120, _formatDateTime(item['job_start'])),
-          _dCell(context, 100, item['vehicle_name']),
-          _dCell(context, 150, item['driver_name'] ?? item['driver']),
-          _dCell(context, 100, '${item['fuel_qty'] ?? 0} L'),
-          _dCell(context, 150, item['type_name'] ?? item['job_type_name']),
-          _dCell(context, 120, item['route_master_name']),
-          _dCell(context, 150,
+          _dCell(context, 180, item['job_no']),
+          _dCell(context, 180, _formatDateTime(item['job_start'])),
+          _dCell(context, 140, item['vehicle_name']),
+          _dCell(context, 240, item['driver_name'] ?? item['driver']),
+          _dCell(context, 140, '${item['fuel_qty'] ?? 0} L'),
+          _dCell(context, 240, item['type_name'] ?? item['job_type_name']),
+          _dCell(context, 220, item['route_master_name']),
+          _dCell(context, 250,
               item['drop_point'] ?? item['route_stations'] ?? '-'),
-          _actionCell(60, () => _showPreviewAndPrint(item['job_no'], notifier)),
+          _actionCell(
+              100, () => _showPreviewAndPrint(item['job_no'], notifier)),
         ],
       ),
     );
@@ -739,13 +872,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       {Alignment align = Alignment.centerLeft, Widget? child}) {
     return Container(
       width: w,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       alignment: align,
       child: child ??
           Text(text,
               style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 13,
+                  fontSize: 20,
                   color: Colors.white)),
     );
   }
@@ -755,7 +888,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final str = text?.toString() ?? '-';
     return Container(
       width: w,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       alignment: align,
       child: Tooltip(
         message: 'คลิกเพื่อคัดลอก',
@@ -765,14 +898,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ScaffoldMessenger.of(context).clearSnackBars();
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('คัดลอก "$str" ลงคลิปบอร์ดแล้ว',
-                  style: const TextStyle(fontFamily: 'Sarabun')),
+                  style: const TextStyle(fontFamily: 'Sarabun', fontSize: 16)),
               duration: const Duration(seconds: 1),
               backgroundColor: Colors.green.shade600,
             ));
           },
           child: Text(str,
               style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 18,
                   color: link ? Colors.blue.shade700 : Colors.black87,
                   decoration: link ? TextDecoration.underline : null,
                   height: 1.5)),
@@ -784,16 +917,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _actionCell(double w, VoidCallback onTap) {
     return Container(
       width: w,
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: 10),
       alignment: Alignment.topCenter,
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
               color: Colors.orange.shade400,
               borderRadius: BorderRadius.circular(4)),
-          child: const Icon(Icons.print, size: 16, color: Colors.white),
+          child: const Icon(Icons.print, size: 24, color: Colors.white),
         ),
       ),
     );
@@ -801,21 +934,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildDateInput(TextEditingController ctrl, String label) {
     return SizedBox(
-      width: 120,
-      height: 35,
+      width: 160,
+      height: 45,
       child: TextField(
         controller: ctrl,
         readOnly: true,
         onTap: () => _pickDate(ctrl),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: const TextStyle(fontSize: 16),
           isDense: true,
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           border: const OutlineInputBorder(),
-          suffixIcon: const Icon(Icons.calendar_today, size: 14),
+          suffixIcon: const Icon(Icons.calendar_today, size: 18),
         ),
-        style: const TextStyle(fontSize: 12),
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }
