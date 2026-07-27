@@ -5,6 +5,8 @@ import '../../../thai_print_utils.dart';
 
 class Lq310FuelOrderBuilder {
   static const String escInit = '\x1B\x40';
+  static const String escPageLen = '\x1B\x43\x21';
+  static const String escCancelSkip = '\x1B\x4F';
   static const String escThaiTis620 = '\x1B\x74\x15';
   static const String escThai3Pass = '\x1C\x70\x03';
   static const String font10Cpi = '\x1B\x50';
@@ -61,10 +63,10 @@ class Lq310FuelOrderBuilder {
     final String escSetTab = '\x1B\x44${String.fromCharCode(70)}\x00';
     final StringBuffer contentBuffer = StringBuffer();
 
-    contentBuffer
-        .write('$escInit$font15Cpi$escThaiTis620$escThai3Pass$escSetTab');
-
     for (final item in printData) {
+      String formContent =
+          '$escInit$escPageLen$escCancelSkip$font15Cpi$escThaiTis620$escThai3Pass$escSetTab';
+
       final fleetId = item['fleet_id']?.toString() ?? '';
 
       String dateStr = '....................';
@@ -157,7 +159,12 @@ class Lq310FuelOrderBuilder {
       lines.add('');
       lines.add('');
 
-      contentBuffer.write(lines.join('\r\n') + '\r\n');
+      while (lines.length < 23) {
+        lines.add('');
+      }
+
+      formContent += lines.join('\r\n') + '\r\n';
+      contentBuffer.write(formContent);
     }
 
     final Uint8List? tis620Bytes =
