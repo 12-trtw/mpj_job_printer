@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpj_job_printer/src/services/windows_printer_service.dart';
 import 'package:mpj_job_printer/src/features/utils/print/data/datasources/lq310_form_builder.dart';
@@ -20,7 +23,7 @@ class PrintDashboardState {
   final String currentStartDate;
   final String currentEndDate;
   final String currentKeyword;
-  final int currentLimit; // [NEW] เพิ่มตัวแปรเก็บจำนวณแถวต่อหน้า
+  final int currentLimit;
 
   PrintDashboardState({
     this.isLoading = false,
@@ -37,7 +40,7 @@ class PrintDashboardState {
     this.currentStartDate = '',
     this.currentEndDate = '',
     this.currentKeyword = '',
-    this.currentLimit = 25, // [NEW] ค่าเริ่มต้นเป็น 25
+    this.currentLimit = 25,
   });
 
   PrintDashboardState copyWith({
@@ -55,7 +58,7 @@ class PrintDashboardState {
     String? currentStartDate,
     String? currentEndDate,
     String? currentKeyword,
-    int? currentLimit, // [NEW]
+    int? currentLimit,
   }) {
     return PrintDashboardState(
       isLoading: isLoading ?? this.isLoading,
@@ -72,7 +75,7 @@ class PrintDashboardState {
       currentStartDate: currentStartDate ?? this.currentStartDate,
       currentEndDate: currentEndDate ?? this.currentEndDate,
       currentKeyword: currentKeyword ?? this.currentKeyword,
-      currentLimit: currentLimit ?? this.currentLimit, // [NEW]
+      currentLimit: currentLimit ?? this.currentLimit,
     );
   }
 }
@@ -80,8 +83,6 @@ class PrintDashboardState {
 class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   final PrintRepository _repository = PrintRepository();
   final WindowsPrinterService _printerService = WindowsPrinterService();
-
-  // [REMOVED] ลบ _itemsPerPage ที่เป็นค่าคงที่ออกไป เพื่อใช้ currentLimit ใน State แทน
 
   PrintDashboardNotifier() : super(PrintDashboardState()) {
     fetchPrinters();
@@ -137,12 +138,11 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       );
     } catch (e) {
       state = state.copyWith(
-        statusMessage: '❌ ดึงรายชื่อเครื่องพิมพ์ล้มเหลว: $e',
+        statusMessage: ' ดึงรายชื่อเครื่องพิมพ์ล้มเหลว: $e',
       );
     }
   }
 
-  // [MODIFIED] เพิ่มการรับค่า limit เข้ามาที่ฟังก์ชัน
   Future<void> fetchJobs({
     required String mode,
     required String startDate,
@@ -160,7 +160,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       currentStartDate: startDate,
       currentEndDate: endDate,
       currentKeyword: keyword,
-      currentLimit: limit, // [NEW] จดจำค่า limit ที่ผู้ใช้เลือกไว้
+      currentLimit: limit,
     );
 
     try {
@@ -169,7 +169,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         startDate: startDate,
         endDate: endDate,
         page: page,
-        limit: limit, // [MODIFIED] ส่ง limit เข้า API แทนค่าคงที่
+        limit: limit,
         keyword: keyword,
       );
 
@@ -187,12 +187,11 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        statusMessage: '❌ ข้อผิดพลาด: $e',
+        statusMessage: ' ข้อผิดพลาด: $e',
       );
     }
   }
 
-  // [MODIFIED] อัปเดตให้ส่งค่า limit เดิมไปเวลาผู้ใช้กดเปลี่ยนหน้า
   void changePage(int newPage) {
     if (newPage > 0 && newPage <= state.totalPages) {
       fetchJobs(
@@ -201,23 +200,25 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         endDate: state.currentEndDate,
         keyword: state.currentKeyword,
         page: newPage,
-        limit: state.currentLimit, // โยน limit ที่จำไว้เข้าไป
+        limit: state.currentLimit,
       );
     }
   }
 
+  // [MODIFIED] อัปเดตฟังก์ชันนี้เพื่อดึงข้อมูลจาก job-info ก่อนพิมพ์
   Future<void> printSelectedJobs() async {
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
-      state = state.copyWith(statusMessage: '❌ กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
+      state = state.copyWith(statusMessage: ' กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
       return;
     }
 
     state = state.copyWith(
       isPrinting: true,
-      statusMessage: '⏳ กำลังประมวลผลคำสั่งพิมพ์...',
+      statusMessage: '⏳ กำลังเตรียมข้อมูลเพื่อสั่งพิมพ์...',
     );
 
     try {
+      // 1. คัดกรองเอาเฉพาะ Job ที่ผู้ใช้ติ๊กเลือกไว้จากในตาราง
       final itemsToPrint = state.jobs
           .asMap()
           .entries
@@ -233,10 +234,65 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         throw Exception('ไม่พบข้อมูลที่ต้องการพิมพ์');
       }
 
-      final rawBytes = state.currentMode == 'job'
-          ? await Lq310FormBuilder().buildPrintBuffer(itemsToPrint)
-          : await Lq310FuelOrderBuilder().buildPrintBuffer(itemsToPrint);
+      Uint8List rawBytes;
 
+      if (state.currentMode == 'job') {
+        state =
+            state.copyWith(statusMessage: '⏳ กำลังดึงข้อมูลรายละเอียด Job...');
+
+        // 2. ดึงเฉพาะรหัส job_no ออกมาเป็น List
+        final List<String> jobNos = itemsToPrint
+            .map((e) => e['job_no']?.toString() ?? '')
+            .where((no) => no.isNotEmpty && no != 'null')
+            .toList();
+
+        // 3. ยิง API เส้น job-info เพื่อขอรายละเอียดเชิงลึก
+        final response = await http
+            .post(
+              Uri.parse('http://tmsthai.com:9100/mpj-v1/report/job-info'),
+              headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+              body: jsonEncode([
+                {
+                  "job_no": jobNos, // ส่งอาร์เรย์ของ job_no ไปทั้งหมดทีเดียว
+                  "start_date": "",
+                  "end_date": "",
+                  "page": 1,
+                  "limit": 999
+                }
+              ]),
+            )
+            .timeout(const Duration(seconds: 20)); // ตั้ง Timeout กันค้าง
+
+        if (response.statusCode != 200) {
+          throw Exception(
+              'เซิร์ฟเวอร์ job-info ตอบกลับผิดพลาด (HTTP ${response.statusCode})');
+        }
+
+        final List<dynamic> responseData =
+            jsonDecode(utf8.decode(response.bodyBytes));
+        if (responseData.isEmpty || responseData[0]['status'] != 'success') {
+          throw Exception('API แจ้งเตือน: ไม่สามารถดึงข้อมูลรายละเอียดได้');
+        }
+
+        // 4. แปลงข้อมูลที่ได้กลับมา และส่งเข้า Builder ของเรา
+        final List<dynamic> detailedDataList = responseData[0]['data'] ?? [];
+        final List<Map<String, dynamic>> finalPrintData =
+            List<Map<String, dynamic>>.from(detailedDataList);
+
+        if (finalPrintData.isEmpty) {
+          throw Exception('ไม่พบข้อมูลรายละเอียดจากระบบ (Data Empty)');
+        }
+
+        rawBytes = await Lq310FormBuilder().buildPrintBuffer(finalPrintData);
+      } else {
+        // สำหรับโหมด Fuel ใชัข้อมูลจากหน้าจอได้เลยไม่ต้องยิงเส้นใหม่
+        rawBytes = await Lq310FuelOrderBuilder().buildPrintBuffer(itemsToPrint);
+      }
+
+      state =
+          state.copyWith(statusMessage: '⏳ กำลังส่งข้อมูลเข้าเครื่องพิมพ์...');
+
+      // 5. สั่งพิมพ์
       await _printerService.printRawData(
         printerName: state.selectedPrinter!,
         rawTis620Bytes: rawBytes,
@@ -244,13 +300,13 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
       state = state.copyWith(
         isPrinting: false,
-        statusMessage: '✅ ส่งคำสั่งพิมพ์เข้าเครื่องสำเร็จแล้ว!',
+        statusMessage: ' ส่งคำสั่งพิมพ์เข้าเครื่องสำเร็จแล้ว!',
         selectedKeys: const {},
       );
     } catch (e) {
       state = state.copyWith(
         isPrinting: false,
-        statusMessage: '❌ พิมพ์ล้มเหลว: $e',
+        statusMessage: ' พิมพ์ล้มเหลว: $e',
       );
     }
   }
