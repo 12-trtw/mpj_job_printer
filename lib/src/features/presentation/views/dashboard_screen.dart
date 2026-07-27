@@ -90,21 +90,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             height: 55,
             color: const Color(0xFFF97316),
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.apps, color: Colors.white),
-                const SizedBox(width: 12),
-                const Text('Plan Report - Print Management',
+                Icon(Icons.apps, color: Colors.white),
+                SizedBox(width: 12),
+                Text('Print Management',
                     style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
-                const Spacer(),
-                const Icon(Icons.person, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('Administrator',
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.9), fontSize: 16)),
+                Spacer(),
               ],
             ),
           ),
