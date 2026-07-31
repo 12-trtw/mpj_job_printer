@@ -43,7 +43,7 @@ class PrintDashboardState {
     this.currentStartDate = '',
     this.currentEndDate = '',
     this.currentKeyword = '',
-    this.currentLimit = 10, // <--- Default เป็น 10 ตามที่ต้องการ
+    this.currentLimit = 10,
     this.isDemoMode = false,
   });
 
@@ -131,7 +131,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     if (select) {
       final keys = state.jobs
           .map((item) {
-            // เพิ่มรองรับ order_number
             return item['job_no']?.toString() ??
                 item['order_number']?.toString() ??
                 item['fleet_id']?.toString() ??
@@ -307,7 +306,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     }
   }
 
-  // 🚀 ดึงข้อมูลจาก Local ได้เลย ไม่ต้องยิง API แล้ว
   Future<List<Map<String, dynamic>>?> getPrintPreviewData(
       String mode, String refId) async {
     try {
@@ -326,7 +324,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     }
   }
 
-  // 🚀 ดึงข้อมูลหลายใบจาก Local ได้เลย ไม่ต้องยิง API แล้ว
   Future<List<Map<String, dynamic>>?> getBatchPrintPreviewData() async {
     if (state.selectedKeys.isEmpty)
       throw Exception('กรุณาเลือกรายการที่ต้องการพิมพ์');
