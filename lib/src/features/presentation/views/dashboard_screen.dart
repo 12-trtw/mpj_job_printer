@@ -372,8 +372,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   scrollDirection: Axis.horizontal,
                                   child: SizedBox(
                                     width: state.currentMode == 'job'
-                                        ? 2750
-                                        : 1200,
+                                        ? 2700
+                                        : 1150,
                                     child: Column(
                                       children: [
                                         _buildTableHeader(state, notifier),
@@ -392,16 +392,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                 final rowColor =
                                                     _getRowColor(item);
 
-                                                final globalIndex = (state
-                                                            .currentLimit ==
-                                                        999999)
-                                                    ? index + 1
-                                                    : ((state.currentPage - 1) *
-                                                            state
-                                                                .currentLimit) +
-                                                        index +
-                                                        1;
-
                                                 final refId = item['job_no']
                                                         ?.toString() ??
                                                     item['order_number']
@@ -409,10 +399,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                     item['fleet_id']
                                                         ?.toString() ??
                                                     '';
-                                                final uniqueKey = refId
-                                                        .isNotEmpty
-                                                    ? refId
-                                                    : globalIndex.toString();
+                                                final uniqueKey =
+                                                    refId.isNotEmpty
+                                                        ? refId
+                                                        : index.toString();
                                                 final isSelected = state
                                                     .selectedKeys
                                                     .contains(uniqueKey);
@@ -422,7 +412,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                     ? _buildJobRow(
                                                         context,
                                                         item,
-                                                        globalIndex,
                                                         rowColor,
                                                         notifier,
                                                         uniqueKey,
@@ -431,7 +420,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                     : _buildFuelRow(
                                                         context,
                                                         item,
-                                                        globalIndex,
                                                         rowColor,
                                                         notifier,
                                                         uniqueKey,
@@ -864,12 +852,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildJobRow(
       BuildContext context,
       Map<String, dynamic> item,
-      int globalIndex,
       Color rowColor,
       PrintDashboardNotifier notifier,
       String uniqueKey,
       bool isSelected,
       String refId) {
+    final isPrinted = (item['print_job']?.toString() == '1') ||
+        (item['print_status']?.toString() == '1');
+
     return Container(
       constraints: const BoxConstraints(minHeight: 45),
       decoration: BoxDecoration(
@@ -888,8 +878,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 onChanged: (_) => notifier.toggleSelection(uniqueKey),
                 activeColor: const Color(0xFFF97316)),
           ),
-          _dCell(context, 50, globalIndex.toString(),
-              align: Alignment.topCenter),
+          _actionCell(
+              60, () => _showPreviewAndPrint(refId, notifier), isPrinted),
           _dCell(context, 130, item['order_number']),
           _dCell(context, 130, item['job_no']),
           _dCell(context, 120, _formatDateTime(item['job_start'])),
@@ -912,7 +902,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _dCell(context, 100, item['create_by'] ?? '-'),
           _dCell(context, 120, _formatDateTime(item['create_date'])),
           _dCell(context, 120, _formatDateTime(item['update_date'])),
-          _actionCell(60, () => _showPreviewAndPrint(refId, notifier)),
         ],
       ),
     );
@@ -921,12 +910,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildFuelRow(
       BuildContext context,
       Map<String, dynamic> item,
-      int globalIndex,
       Color rowColor,
       PrintDashboardNotifier notifier,
       String uniqueKey,
       bool isSelected,
       String refId) {
+    final isPrinted = (item['print_fuel']?.toString() == '1') ||
+        (item['print_job']?.toString() == '1') ||
+        (item['print_status']?.toString() == '1');
+
     return Container(
       constraints: const BoxConstraints(minHeight: 45),
       decoration: BoxDecoration(
@@ -945,8 +937,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 onChanged: (_) => notifier.toggleSelection(uniqueKey),
                 activeColor: const Color(0xFFF97316)),
           ),
-          _dCell(context, 50, globalIndex.toString(),
-              align: Alignment.topCenter),
+          _actionCell(
+              60, () => _showPreviewAndPrint(refId, notifier), isPrinted),
           _dCell(context, 130, item['job_no']),
           _dCell(context, 120, _formatDateTime(item['job_start'])),
           _dCell(context, 100, item['vehicle_name']),
@@ -956,7 +948,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _dCell(context, 120, item['route_master_name']),
           _dCell(context, 150,
               item['drop_point'] ?? item['route_stations'] ?? '-'),
-          _actionCell(60, () => _showPreviewAndPrint(refId, notifier)),
         ],
       ),
     );
@@ -1008,7 +999,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _actionCell(double w, VoidCallback onTap) {
+  Widget _actionCell(double w, VoidCallback onTap, bool isPrinted) {
     return Container(
       width: w,
       padding: const EdgeInsets.only(top: 8),
@@ -1018,7 +1009,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         child: Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-              color: Colors.orange.shade400,
+              color: isPrinted ? Colors.green.shade500 : Colors.orange.shade400,
               borderRadius: BorderRadius.circular(4)),
           child: const Icon(Icons.print, size: 16, color: Colors.white),
         ),

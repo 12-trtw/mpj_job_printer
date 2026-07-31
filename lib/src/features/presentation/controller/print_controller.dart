@@ -294,9 +294,17 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         dataList = decoded[0]['data'] ?? [];
       }
 
+      List<Map<String, dynamic>> sortedList =
+          List<Map<String, dynamic>>.from(dataList);
+      sortedList.sort((a, b) {
+        final valA = (a['order_number'] ?? a['job_no'] ?? '').toString();
+        final valB = (b['order_number'] ?? b['job_no'] ?? '').toString();
+        return valA.compareTo(valB);
+      });
+
       state = state.copyWith(
         isLoading: false,
-        allJobs: List<Map<String, dynamic>>.from(dataList),
+        allJobs: sortedList,
       );
 
       _applyLocalFilterAndPagination();
