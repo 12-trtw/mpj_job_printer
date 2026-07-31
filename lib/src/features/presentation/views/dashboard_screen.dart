@@ -25,9 +25,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    _startDateCtrl.text = today;
-    _endDateCtrl.text = today;
+    final today = DateTime.now();
+    final sevenDaysAgo = today.subtract(const Duration(days: 7));
+
+    _startDateCtrl.text = DateFormat('yyyy-MM-dd').format(sevenDaysAgo);
+    _endDateCtrl.text = DateFormat('yyyy-MM-dd').format(today);
   }
 
   @override
