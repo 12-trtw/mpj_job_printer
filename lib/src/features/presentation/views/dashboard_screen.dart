@@ -817,7 +817,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         value: isAllSelected,
                         onChanged: (v) => notifier.selectAll(v ?? false),
                         activeColor: const Color(0xFFF97316))),
-                _hCell(50, 'NO#'),
+                _hCell(60, 'Print', align: Alignment.center),
                 _hCell(130, 'Order No'),
                 _hCell(130, 'JOB NO'),
                 _hCell(120, 'Job start'),
@@ -838,7 +838,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 _hCell(100, 'Created By'),
                 _hCell(120, 'Created Date'),
                 _hCell(120, 'Update Date'),
-                _hCell(60, 'Print', align: Alignment.center),
               ],
             )
           : Row(
@@ -848,7 +847,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         value: isAllSelected,
                         onChanged: (v) => notifier.selectAll(v ?? false),
                         activeColor: const Color(0xFFF97316))),
-                _hCell(50, 'No#'),
+                _hCell(60, 'Print', align: Alignment.center),
                 _hCell(130, 'Job no'),
                 _hCell(120, 'job start'),
                 _hCell(100, 'ทะเบียนรถ'),
@@ -857,7 +856,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 _hCell(150, 'JOB Type'),
                 _hCell(120, 'Route'),
                 _hCell(150, 'drop'),
-                _hCell(60, 'Print', align: Alignment.center),
               ],
             ),
     );
