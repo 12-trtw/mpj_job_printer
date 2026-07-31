@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,11 +11,14 @@ class PrintDashboardState {
   final bool isLoading;
   final bool isPrinting;
   final String statusMessage;
+
   final List<Map<String, dynamic>> allJobs;
   final List<Map<String, dynamic>> jobs;
+
   final Set<String> selectedKeys;
   final List<String> availablePrinters;
   final String? selectedPrinter;
+
   final int currentPage;
   final int totalPages;
   final int totalItems;
@@ -29,7 +33,7 @@ class PrintDashboardState {
     this.isLoading = false,
     this.isPrinting = false,
     this.statusMessage = '',
-    this.allJobs = const [], // [NEW]
+    this.allJobs = const [],
     this.jobs = const [],
     this.selectedKeys = const {},
     this.availablePrinters = const [],
@@ -41,7 +45,7 @@ class PrintDashboardState {
     this.currentStartDate = '',
     this.currentEndDate = '',
     this.currentKeyword = '',
-    this.currentLimit = 25,
+    this.currentLimit = 999999,
     this.isDemoMode = false,
   });
 
@@ -49,7 +53,7 @@ class PrintDashboardState {
     bool? isLoading,
     bool? isPrinting,
     String? statusMessage,
-    List<Map<String, dynamic>>? allJobs, // [NEW]
+    List<Map<String, dynamic>>? allJobs,
     List<Map<String, dynamic>>? jobs,
     Set<String>? selectedKeys,
     List<String>? availablePrinters,
@@ -68,7 +72,7 @@ class PrintDashboardState {
       isLoading: isLoading ?? this.isLoading,
       isPrinting: isPrinting ?? this.isPrinting,
       statusMessage: statusMessage ?? this.statusMessage,
-      allJobs: allJobs ?? this.allJobs, // [NEW]
+      allJobs: allJobs ?? this.allJobs,
       jobs: jobs ?? this.jobs,
       selectedKeys: selectedKeys ?? this.selectedKeys,
       availablePrinters: availablePrinters ?? this.availablePrinters,
@@ -94,12 +98,11 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   }
 
   String get _baseUrl => state.isDemoMode
-      ? 'http://tmsthai.com:9100/mpj-v1' //Demo
-      : 'https://tms.mpjdc.com:7049'; //Production
+      ? 'http://tmsthai.com:9100/mpj-v1' // Demo
+      : 'https://tms.mpjdc.com:7049'; // Production
 
   void setEnvironment(bool isDemo) {
     if (state.isDemoMode == isDemo) return;
-
     state = state.copyWith(
         isDemoMode: isDemo,
         statusMessage: isDemo
@@ -110,31 +113,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       mode: state.currentMode,
       startDate: state.currentStartDate,
       endDate: state.currentEndDate,
-      keyword: state.currentKeyword,
-      page: 1,
-      limit: state.currentLimit,
     );
-  }
-
-  // [NEW] ฟังก์ชันสำหรับกรองข้อมูลในเครื่อง (Local Search)
-  void filterLocal(String keyword) {
-    final lowerKey = keyword.toLowerCase();
-
-    if (lowerKey.isEmpty) {
-      // ถ้าช่องค้นหาว่างเปล่า ให้โชว์ข้อมูลทั้งหมด
-      state = state.copyWith(jobs: state.allJobs, currentKeyword: keyword);
-      return;
-    }
-
-    // ค้นหาข้อความในทุกๆ Column ของข้อมูล
-    final filtered = state.allJobs.where((item) {
-      return item.values.any((val) {
-        if (val == null) return false;
-        return val.toString().toLowerCase().contains(lowerKey);
-      });
-    }).toList();
-
-    state = state.copyWith(jobs: filtered, currentKeyword: keyword);
   }
 
   void setPrinter(String? printerName) {
@@ -143,11 +122,10 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
   void toggleSelection(String key) {
     final newKeys = Set<String>.from(state.selectedKeys);
-    if (newKeys.contains(key)) {
+    if (newKeys.contains(key))
       newKeys.remove(key);
-    } else {
+    else
       newKeys.add(key);
-    }
     state = state.copyWith(selectedKeys: newKeys);
   }
 
@@ -161,6 +139,69 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       state = state.copyWith(selectedKeys: keys);
     } else {
       state = state.copyWith(selectedKeys: const {});
+    }
+  }
+
+  void _applyLocalFilterAndPagination() {
+    List<Map<String, dynamic>> filtered = state.allJobs;
+    if (state.currentKeyword.trim().isNotEmpty) {
+      final lowerKey = state.currentKeyword.trim().toLowerCase();
+      filtered = state.allJobs.where((item) {
+        return item.values.any((val) {
+          if (val == null) return false;
+          return val.toString().toLowerCase().contains(lowerKey);
+        });
+      }).toList();
+    }
+    final totalItems = filtered.length;
+    final limit = state.currentLimit;
+
+    int totalPages = 1;
+    if (limit != 999999 && totalItems > 0) {
+      totalPages = (totalItems / limit).ceil();
+    }
+
+    int validPage = state.currentPage;
+    if (validPage > totalPages) validPage = totalPages;
+    if (validPage < 1) validPage = 1;
+
+    List<Map<String, dynamic>> paginatedJobs = filtered;
+    if (limit != 999999 && totalItems > 0) {
+      final startIndex = (validPage - 1) * limit;
+      var endIndex = startIndex + limit;
+      if (endIndex > totalItems) endIndex = totalItems;
+
+      if (startIndex < totalItems) {
+        paginatedJobs = filtered.sublist(startIndex, endIndex);
+      } else {
+        paginatedJobs = [];
+      }
+    }
+
+    state = state.copyWith(
+      jobs: paginatedJobs,
+      totalItems: totalItems,
+      totalPages: totalPages,
+      currentPage: validPage,
+    );
+  }
+
+  void filterLocal(String keyword) {
+    state = state.copyWith(
+        currentKeyword: keyword, currentPage: 1, selectedKeys: const {});
+    _applyLocalFilterAndPagination();
+  }
+
+  void changeLimit(int limit) {
+    state = state
+        .copyWith(currentLimit: limit, currentPage: 1, selectedKeys: const {});
+    _applyLocalFilterAndPagination();
+  }
+
+  void changePage(int newPage) {
+    if (newPage > 0 && newPage <= state.totalPages) {
+      state = state.copyWith(currentPage: newPage, selectedKeys: const {});
+      _applyLocalFilterAndPagination();
     }
   }
 
@@ -189,9 +230,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     required String mode,
     required String startDate,
     required String endDate,
-    String keyword = '',
-    int page = 1,
-    int limit = 25,
   }) async {
     state = state.copyWith(
       isLoading: true,
@@ -202,8 +240,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       currentMode: mode,
       currentStartDate: startDate,
       currentEndDate: endDate,
-      currentKeyword: keyword,
-      currentLimit: limit,
+      currentPage: 1,
     );
 
     try {
@@ -216,12 +253,11 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
               {
                 "start_date": startDate,
                 "end_date": endDate,
-                "page": page,
-                "limit": limit,
+                "page": 1,
+                "limit": 999999,
                 "approve_status": "",
                 "cost_status": "",
-                "keyword":
-                    keyword // ถ้ากดจากปุ่มกรองวันที่ ระบบจะส่งคีย์เวิร์ดมาหา API ด้วย
+                "keyword": ""
               }
             ]
           : [
@@ -229,8 +265,8 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
                 "job_no": [],
                 "start_date": startDate,
                 "end_date": endDate,
-                "page": page,
-                "limit": limit
+                "page": 1,
+                "limit": 999999
               }
             ];
 
@@ -240,7 +276,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
             headers: {'Content-Type': 'application/json', 'license': 'mpj'},
             body: jsonEncode(payload),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw Exception('API Error: ${response.statusCode}');
@@ -248,51 +284,24 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       List<dynamic> dataList = [];
-      int totalPages = 1;
-      int totalItems = 0;
 
       if (decoded is Map && decoded['status'] == 'success') {
         dataList = decoded['data'] ?? [];
-        totalPages = decoded['total_pages'] ?? 1;
-        totalItems = decoded['total_items'] ?? 0;
       } else if (decoded is List &&
           decoded.isNotEmpty &&
           decoded[0]['status'] == 'success') {
         dataList = decoded[0]['data'] ?? [];
-        totalPages = decoded[0]['total_pages'] ?? 1;
-        totalItems = decoded[0]['total_items'] ?? 0;
       }
 
       state = state.copyWith(
         isLoading: false,
-        allJobs:
-            List<Map<String, dynamic>>.from(dataList), // เก็บเข้า allJobs ด้วย
-        jobs: List<Map<String, dynamic>>.from(dataList),
-        currentPage: page,
-        totalPages: totalPages,
-        totalItems: totalItems,
+        allJobs: List<Map<String, dynamic>>.from(dataList),
       );
 
-      // อัปเดตข้อมูลบนจอใหม่หากมีข้อความค้างอยู่ในช่องค้นหา
-      if (keyword.isNotEmpty) {
-        filterLocal(keyword);
-      }
+      _applyLocalFilterAndPagination();
     } catch (e) {
       state =
           state.copyWith(isLoading: false, statusMessage: '❌ ข้อผิดพลาด: $e');
-    }
-  }
-
-  void changePage(int newPage) {
-    if (newPage > 0 && newPage <= state.totalPages) {
-      fetchJobs(
-        mode: state.currentMode,
-        startDate: state.currentStartDate,
-        endDate: state.currentEndDate,
-        keyword: state.currentKeyword,
-        page: newPage,
-        limit: state.currentLimit,
-      );
     }
   }
 
@@ -302,7 +311,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       final String apiUrl = mode == 'job'
           ? '$_baseUrl/report/job-info'
           : '$_baseUrl/report/order-fuel';
-
       final payload = [
         {
           "job_no": [jobNo],
@@ -314,27 +322,21 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       ];
 
       final response = await http
-          .post(
-            Uri.parse(apiUrl),
-            headers: {'Content-Type': 'application/json', 'license': 'mpj'},
-            body: jsonEncode(payload),
-          )
+          .post(Uri.parse(apiUrl),
+              headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+              body: jsonEncode(payload))
           .timeout(const Duration(seconds: 15));
-
-      if (response.statusCode != 200) {
+      if (response.statusCode != 200)
         throw Exception('API Error: HTTP ${response.statusCode}');
-      }
 
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       List<dynamic> data = [];
-
       if (decoded is List &&
           decoded.isNotEmpty &&
-          decoded[0]['status'] == 'success') {
+          decoded[0]['status'] == 'success')
         data = decoded[0]['data'] ?? [];
-      } else if (decoded is Map && decoded['status'] == 'success') {
+      else if (decoded is Map && decoded['status'] == 'success')
         data = decoded['data'] ?? [];
-      }
 
       if (data.isEmpty) throw Exception('ไม่พบข้อมูลรายละเอียดจากระบบ');
       return List<Map<String, dynamic>>.from(data);
@@ -344,9 +346,8 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   }
 
   Future<List<Map<String, dynamic>>?> getBatchPrintPreviewData() async {
-    if (state.selectedKeys.isEmpty) {
+    if (state.selectedKeys.isEmpty)
       throw Exception('กรุณาเลือกรายการที่ต้องการพิมพ์');
-    }
 
     final itemsToPrint = state.jobs
         .asMap()
@@ -364,7 +365,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           .map((e) => e['job_no']?.toString() ?? '')
           .where((n) => n.isNotEmpty)
           .toList();
-
       final payload = [
         {
           "job_no": jobNos,
@@ -374,27 +374,23 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           "limit": 999
         }
       ];
-      final response = await http
-          .post(
-            Uri.parse('$_baseUrl/report/job-info'),
-            headers: {'Content-Type': 'application/json', 'license': 'mpj'},
-            body: jsonEncode(payload),
-          )
-          .timeout(const Duration(seconds: 30));
 
-      if (response.statusCode != 200) {
+      final response = await http
+          .post(Uri.parse('$_baseUrl/report/job-info'),
+              headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+              body: jsonEncode(payload))
+          .timeout(const Duration(seconds: 45));
+      if (response.statusCode != 200)
         throw Exception('API Error: ${response.statusCode}');
-      }
 
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       List<dynamic> detailedData = [];
       if (decoded is List &&
           decoded.isNotEmpty &&
-          decoded[0]['status'] == 'success') {
+          decoded[0]['status'] == 'success')
         detailedData = decoded[0]['data'] ?? [];
-      } else if (decoded is Map && decoded['status'] == 'success') {
+      else if (decoded is Map && decoded['status'] == 'success')
         detailedData = decoded['data'] ?? [];
-      }
 
       if (detailedData.isEmpty) throw Exception('ไม่พบรายละเอียดในระบบ');
       return List<Map<String, dynamic>>.from(detailedData);
@@ -409,7 +405,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       state = state.copyWith(statusMessage: '❌ กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
       return;
     }
-
     state = state.copyWith(
         isPrinting: true,
         statusMessage: '⏳ กำลังส่งข้อมูลไปที่เครื่องพิมพ์...');
@@ -417,7 +412,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       final rawBytes = mode == 'job'
           ? await Lq310FormBuilder().buildPrintBuffer(dataToPrint)
           : await Lq310FuelOrderBuilder().buildPrintBuffer(dataToPrint);
-
       await _printerService.printRawData(
           printerName: state.selectedPrinter!, rawTis620Bytes: rawBytes);
       state = state.copyWith(
@@ -464,7 +458,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
             .map((e) => e['job_no']?.toString() ?? '')
             .where((n) => n.isNotEmpty)
             .toList();
-
         state = state.copyWith(
             statusMessage:
                 '⏳ กำลังดึงรายละเอียดงาน ${jobNos.length} รายการ...');
@@ -479,29 +472,24 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           }
         ];
         final response = await http
-            .post(
-              Uri.parse('$_baseUrl/report/job-info'),
-              headers: {'Content-Type': 'application/json', 'license': 'mpj'},
-              body: jsonEncode(payload),
-            )
-            .timeout(const Duration(seconds: 30));
+            .post(Uri.parse('$_baseUrl/report/job-info'),
+                headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+                body: jsonEncode(payload))
+            .timeout(const Duration(seconds: 45));
 
-        if (response.statusCode != 200) {
+        if (response.statusCode != 200)
           throw Exception('API Error: ${response.statusCode}');
-        }
 
         final decoded = jsonDecode(utf8.decode(response.bodyBytes));
         List<dynamic> detailedData = [];
         if (decoded is List &&
             decoded.isNotEmpty &&
-            decoded[0]['status'] == 'success') {
+            decoded[0]['status'] == 'success')
           detailedData = decoded[0]['data'] ?? [];
-        } else if (decoded is Map && decoded['status'] == 'success') {
+        else if (decoded is Map && decoded['status'] == 'success')
           detailedData = decoded['data'] ?? [];
-        }
 
         if (detailedData.isEmpty) throw Exception('ไม่พบรายละเอียดในระบบ');
-
         rawBytes = await Lq310FormBuilder()
             .buildPrintBuffer(List<Map<String, dynamic>>.from(detailedData));
       } else {
@@ -514,11 +502,10 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           printerName: state.selectedPrinter!, rawTis620Bytes: rawBytes);
 
       state = state.copyWith(
-        isPrinting: false,
-        statusMessage:
-            '✅ ส่งคำสั่งพิมพ์ทั้ง ${itemsToPrint.length} ใบสำเร็จแล้ว!',
-        selectedKeys: const {},
-      );
+          isPrinting: false,
+          statusMessage:
+              '✅ ส่งคำสั่งพิมพ์ทั้ง ${itemsToPrint.length} ใบสำเร็จแล้ว!',
+          selectedKeys: const {});
     } catch (e) {
       state = state.copyWith(
           isPrinting: false, statusMessage: '❌ พิมพ์ล้มเหลว: $e');

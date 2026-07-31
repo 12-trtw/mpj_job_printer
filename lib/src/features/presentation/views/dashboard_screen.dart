@@ -19,9 +19,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final ScrollController _horizontalScrollController = ScrollController();
   final ScrollController _verticalScrollController = ScrollController();
 
-  String _selectedMode = 'job';
-  int _selectedLimit = 25;
-
   @override
   void initState() {
     super.initState();
@@ -203,20 +200,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 _buildModeButton(
                                   title: '📋 รายการ JOB',
                                   color: const Color(0xFF2563EB),
-                                  isSelected: _selectedMode == 'job',
+                                  isSelected: state.currentMode == 'job',
                                   onTap: () {
-                                    setState(() => _selectedMode = 'job');
-                                    _fetchData(notifier);
+                                    notifier.fetchJobs(
+                                      mode: 'job',
+                                      startDate: _startDateCtrl.text,
+                                      endDate: _endDateCtrl.text,
+                                    );
                                   },
                                 ),
                                 const SizedBox(width: 12),
                                 _buildModeButton(
                                   title: '⛽ รายการเติมน้ำมัน',
                                   color: const Color(0xFF10B981),
-                                  isSelected: _selectedMode == 'fuel',
+                                  isSelected: state.currentMode == 'fuel',
                                   onTap: () {
-                                    setState(() => _selectedMode = 'fuel');
-                                    _fetchData(notifier);
+                                    notifier.fetchJobs(
+                                      mode: 'fuel',
+                                      startDate: _startDateCtrl.text,
+                                      endDate: _endDateCtrl.text,
+                                    );
                                   },
                                 ),
                               ],
@@ -293,9 +296,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   fixedSize: const Size.fromHeight(35)),
                               onPressed: state.isLoading
                                   ? null
-                                  : () => _fetchData(notifier),
+                                  : () {
+                                      notifier.fetchJobs(
+                                        mode: state.currentMode,
+                                        startDate: _startDateCtrl.text,
+                                        endDate: _endDateCtrl.text,
+                                      );
+                                    },
                               icon: const Icon(Icons.filter_alt, size: 16),
-                              label: const Text('กรองวันที่',
+                              label: const Text('ดึงข้อมูลตามวันที่',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                             ),
@@ -358,7 +367,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   controller: _horizontalScrollController,
                                   scrollDirection: Axis.horizontal,
                                   child: SizedBox(
-                                    width: _selectedMode == 'job' ? 2750 : 1200,
+                                    width: state.currentMode == 'job'
+                                        ? 2750
+                                        : 1200,
                                     child: Column(
                                       children: [
                                         _buildTableHeader(state, notifier),
@@ -376,9 +387,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                 final item = state.jobs[index];
                                                 final rowColor =
                                                     _getRowColor(item);
-                                                final globalIndex =
-                                                    ((state.currentPage - 1) *
-                                                            _selectedLimit) +
+
+                                                final globalIndex = (state
+                                                            .currentLimit ==
+                                                        999999)
+                                                    ? index + 1
+                                                    : ((state.currentPage - 1) *
+                                                            state
+                                                                .currentLimit) +
                                                         index +
                                                         1;
 
@@ -391,7 +407,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                     .selectedKeys
                                                     .contains(uniqueKey);
 
-                                                return _selectedMode == 'job'
+                                                return state.currentMode ==
+                                                        'job'
                                                     ? _buildJobRow(
                                                         context,
                                                         item,
@@ -418,7 +435,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 ),
                               ),
                   ),
-                  if (state.jobs.isNotEmpty && !state.isLoading)
+                  if (state.allJobs.isNotEmpty && !state.isLoading)
                     Container(
                       padding: const EdgeInsets.symmetric(
                           vertical: 8, horizontal: 16),
@@ -444,18 +461,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     borderRadius: BorderRadius.circular(4)),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<int>(
-                                    value: _selectedLimit,
-                                    items: [10, 25, 50, 100]
+                                    value: state.currentLimit,
+                                    items: [10, 25, 50, 100, 999999]
                                         .map((v) => DropdownMenuItem(
                                             value: v,
-                                            child: Text('$v',
+                                            child: Text(
+                                                v == 999999 ? 'ALL' : '$v',
                                                 style: const TextStyle(
                                                     fontSize: 13))))
                                         .toList(),
                                     onChanged: (val) {
                                       if (val != null) {
-                                        setState(() => _selectedLimit = val);
-                                        _fetchData(notifier);
+                                        notifier.changeLimit(val);
                                       }
                                     },
                                   ),
@@ -507,17 +524,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  void _fetchData(PrintDashboardNotifier notifier) {
-    notifier.fetchJobs(
-      mode: _selectedMode,
-      startDate: _startDateCtrl.text,
-      endDate: _endDateCtrl.text,
-      keyword: _keywordCtrl.text,
-      page: 1,
-      limit: _selectedLimit,
-    );
-  }
-
   void _showPreviewAndPrint(
       String? jobNo, PrintDashboardNotifier notifier) async {
     if (jobNo == null || jobNo.isEmpty) return;
@@ -536,7 +542,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     try {
       final previewData =
-          await notifier.getPrintPreviewData(_selectedMode, jobNo);
+          await notifier.getPrintPreviewData(state.currentMode, jobNo);
       if (!mounted) return;
       Navigator.pop(context);
 
@@ -570,10 +576,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       _previewText(
                           'คนขับ:', detail['driver_name'] ?? detail['driver']),
                       _previewText('ลูกค้า:', detail['customer_name']),
-                      if (_selectedMode == 'fuel')
+                      if (state.currentMode == 'fuel')
                         _previewText(
                             'ปริมาณน้ำมัน:', '${detail['fuel_qty'] ?? 0} ลิตร'),
-                      if (_selectedMode == 'job')
+                      if (state.currentMode == 'job')
                         _previewText('เบอร์ตู้:',
                             '${detail['container_size'] ?? ''} ${detail['container_no'] ?? ''}'),
                       const SizedBox(height: 16),
@@ -593,7 +599,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         foregroundColor: Colors.white),
                     onPressed: () {
                       Navigator.pop(ctx);
-                      notifier.executePrint(_selectedMode, previewData);
+                      notifier.executePrint(state.currentMode, previewData);
                     },
                     icon: const Icon(Icons.print, size: 18),
                     label: const Text('ยืนยันสั่งพิมพ์'),
@@ -679,11 +685,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     Text(
                                         'ทะเบียนรถ: ${detail['vehicle_name'] ?? '-'} | คนขับ: ${detail['driver_name'] ?? detail['driver'] ?? '-'}',
                                         style: const TextStyle(fontSize: 14)),
-                                    if (_selectedMode == 'job')
+                                    if (state.currentMode == 'job')
                                       Text(
                                           'เบอร์ตู้: ${detail['container_size'] ?? ''} ${detail['container_no'] ?? ''}',
                                           style: const TextStyle(fontSize: 14)),
-                                    if (_selectedMode == 'fuel')
+                                    if (state.currentMode == 'fuel')
                                       Text(
                                           'ปริมาณน้ำมัน: ${detail['fuel_qty'] ?? 0} ลิตร',
                                           style: const TextStyle(fontSize: 14)),
@@ -708,7 +714,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         foregroundColor: Colors.white),
                     onPressed: () {
                       Navigator.pop(ctx);
-                      notifier.executePrint(_selectedMode, previewData);
+                      notifier.executePrint(state.currentMode, previewData);
                     },
                     icon: const Icon(Icons.print, size: 18),
                     label: const Text('ยืนยันสั่งพิมพ์ทั้งหมด',
@@ -790,7 +796,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       decoration: BoxDecoration(
           color: const Color(0xFF94A3B8),
           border: Border.all(color: Colors.grey.shade400)),
-      child: _selectedMode == 'job'
+      child: state.currentMode == 'job'
           ? Row(
               children: [
                 _hCell(50, '',
