@@ -214,6 +214,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 ),
                                 const SizedBox(width: 12),
                                 _buildModeButton(
+                                  title: '📋 รายการ ORDER',
+                                  color: const Color(0xFF8B5CF6),
+                                  isSelected: state.currentMode == 'order',
+                                  onTap: () {
+                                    if (state.currentMode == 'order') return;
+                                    notifier.fetchJobs(
+                                      mode: 'order',
+                                      startDate: _startDateCtrl.text,
+                                      endDate: _endDateCtrl.text,
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 12),
+                                _buildModeButton(
                                   title: '⛽ รายการเติมน้ำมัน',
                                   color: const Color(0xFF10B981),
                                   isSelected: state.currentMode == 'fuel',
@@ -372,8 +386,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   scrollDirection: Axis.horizontal,
                                   child: SizedBox(
                                     width: state.currentMode == 'job'
-                                        ? 2700
-                                        : 1150,
+                                        ? 2500
+                                        : (state.currentMode == 'order'
+                                            ? 2700
+                                            : 1150),
                                     child: Column(
                                       children: [
                                         _buildTableHeader(state, notifier),
@@ -399,6 +415,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                     item['fleet_id']
                                                         ?.toString() ??
                                                     '';
+
                                                 final uniqueKey =
                                                     refId.isNotEmpty
                                                         ? refId
@@ -407,24 +424,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                     .selectedKeys
                                                     .contains(uniqueKey);
 
-                                                return state.currentMode ==
-                                                        'job'
-                                                    ? _buildJobRow(
-                                                        context,
-                                                        item,
-                                                        rowColor,
-                                                        notifier,
-                                                        uniqueKey,
-                                                        isSelected,
-                                                        refId)
-                                                    : _buildFuelRow(
-                                                        context,
-                                                        item,
-                                                        rowColor,
-                                                        notifier,
-                                                        uniqueKey,
-                                                        isSelected,
-                                                        refId);
+                                                if (state.currentMode ==
+                                                    'job') {
+                                                  return _buildJobInfoRow(
+                                                      context,
+                                                      item,
+                                                      rowColor,
+                                                      notifier,
+                                                      uniqueKey,
+                                                      isSelected,
+                                                      refId);
+                                                } else if (state.currentMode ==
+                                                    'order') {
+                                                  return _buildOrderRow(
+                                                      context,
+                                                      item,
+                                                      rowColor,
+                                                      notifier,
+                                                      uniqueKey,
+                                                      isSelected,
+                                                      refId);
+                                                } else {
+                                                  return _buildFuelRow(
+                                                      context,
+                                                      item,
+                                                      rowColor,
+                                                      notifier,
+                                                      uniqueKey,
+                                                      isSelected,
+                                                      refId);
+                                                }
                                               },
                                             ),
                                           ),
@@ -579,7 +608,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       if (state.currentMode == 'fuel')
                         _previewText(
                             'ปริมาณน้ำมัน:', '${detail['fuel_qty'] ?? 0} ลิตร'),
-                      if (state.currentMode == 'job')
+                      if (state.currentMode == 'job' ||
+                          state.currentMode == 'order')
                         _previewText('เบอร์ตู้:',
                             '${detail['container_size'] ?? ''} ${detail['container_no'] ?? ''}'),
                       const SizedBox(height: 16),
@@ -686,7 +716,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     Text(
                                         'ทะเบียนรถ: ${detail['vehicle_name'] ?? '-'} | คนขับ: ${detail['driver_name'] ?? detail['driver'] ?? '-'}',
                                         style: const TextStyle(fontSize: 14)),
-                                    if (state.currentMode == 'job')
+                                    if (state.currentMode == 'job' ||
+                                        state.currentMode == 'order')
                                       Text(
                                           'เบอร์ตู้: ${detail['container_size'] ?? ''} ${detail['container_no'] ?? ''}',
                                           style: const TextStyle(fontSize: 14)),
@@ -792,64 +823,163 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     bool isAllSelected =
         state.jobs.isNotEmpty && state.selectedKeys.length == state.jobs.length;
 
+    if (state.currentMode == 'job') {
+      return Container(
+        height: 40,
+        decoration: BoxDecoration(
+            color: const Color(0xFF94A3B8),
+            border: Border.all(color: Colors.grey.shade400)),
+        child: Row(
+          children: [
+            _hCell(50, '',
+                child: Checkbox(
+                    value: isAllSelected,
+                    onChanged: (v) => notifier.selectAll(v ?? false),
+                    activeColor: const Color(0xFFF97316))),
+            _hCell(60, 'Print', align: Alignment.center),
+            _hCell(130, 'Job No'),
+            _hCell(120, 'Job Start'),
+            _hCell(120, 'Job End'),
+            _hCell(150, 'Job Type'),
+            _hCell(150, 'Customer'),
+            _hCell(100, 'Agent'),
+            _hCell(120, 'Booking No'),
+            _hCell(80, 'Cont. Size'),
+            _hCell(120, 'Cont. No'),
+            _hCell(100, 'Seal'),
+            _hCell(100, 'Plate'),
+            _hCell(80, 'Veh Code'),
+            _hCell(150, 'Driver'),
+            _hCell(120, 'Enter to Work'),
+            _hCell(120, 'Out to Work'),
+            _hCell(100, 'Drop 1'),
+            _hCell(100, 'Drop 2'),
+            _hCell(100, 'Drop 3'),
+            _hCell(100, 'Drop 4'),
+          ],
+        ),
+      );
+    } else if (state.currentMode == 'order') {
+      return Container(
+        height: 40,
+        decoration: BoxDecoration(
+            color: const Color(0xFF94A3B8),
+            border: Border.all(color: Colors.grey.shade400)),
+        child: Row(
+          children: [
+            _hCell(50, '',
+                child: Checkbox(
+                    value: isAllSelected,
+                    onChanged: (v) => notifier.selectAll(v ?? false),
+                    activeColor: const Color(0xFFF97316))),
+            _hCell(60, 'Print', align: Alignment.center),
+            _hCell(130, 'Order No'),
+            _hCell(130, 'JOB NO'),
+            _hCell(120, 'Job start'),
+            _hCell(120, 'Job End'),
+            _hCell(150, 'Job Type'),
+            _hCell(120, 'Vessel'),
+            _hCell(120, 'Booking BL'),
+            _hCell(110, 'Contrainer Size'),
+            _hCell(120, 'Contrainer No'),
+            _hCell(100, 'Seal No'),
+            _hCell(100, 'Plate'),
+            _hCell(150, 'Driver'),
+            _hCell(110, 'traller Plate'),
+            _hCell(200, 'customer'),
+            _hCell(150, 'Consignee'),
+            _hCell(120, 'Route'),
+            _hCell(150, 'Drop'),
+            _hCell(100, 'Created By'),
+            _hCell(120, 'Created Date'),
+            _hCell(120, 'Update Date'),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        height: 40,
+        decoration: BoxDecoration(
+            color: const Color(0xFF94A3B8),
+            border: Border.all(color: Colors.grey.shade400)),
+        child: Row(
+          children: [
+            _hCell(50, '',
+                child: Checkbox(
+                    value: isAllSelected,
+                    onChanged: (v) => notifier.selectAll(v ?? false),
+                    activeColor: const Color(0xFFF97316))),
+            _hCell(60, 'Print', align: Alignment.center),
+            _hCell(130, 'Job no'),
+            _hCell(120, 'job start'),
+            _hCell(100, 'ทะเบียนรถ'),
+            _hCell(150, 'พนักงานขับรถ'),
+            _hCell(100, 'ปริมาณน้ำมัน'),
+            _hCell(150, 'JOB Type'),
+            _hCell(120, 'Route'),
+            _hCell(150, 'drop'),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _buildJobInfoRow(
+      BuildContext context,
+      Map<String, dynamic> item,
+      Color rowColor,
+      PrintDashboardNotifier notifier,
+      String uniqueKey,
+      bool isSelected,
+      String refId) {
+    final isPrinted = (item['print_job']?.toString() == '1') ||
+        (item['print_status']?.toString() == '1');
+
     return Container(
-      height: 40,
+      constraints: const BoxConstraints(minHeight: 45),
       decoration: BoxDecoration(
-          color: const Color(0xFF94A3B8),
-          border: Border.all(color: Colors.grey.shade400)),
-      child: state.currentMode == 'job'
-          ? Row(
-              children: [
-                _hCell(50, '',
-                    child: Checkbox(
-                        value: isAllSelected,
-                        onChanged: (v) => notifier.selectAll(v ?? false),
-                        activeColor: const Color(0xFFF97316))),
-                _hCell(60, 'Print', align: Alignment.center),
-                _hCell(130, 'Order No'),
-                _hCell(130, 'JOB NO'),
-                _hCell(120, 'Job start'),
-                _hCell(120, 'Job End'),
-                _hCell(150, 'Job Type'),
-                _hCell(120, 'Vessel'),
-                _hCell(120, 'Booking BL'),
-                _hCell(110, 'Contrainer Size'),
-                _hCell(120, 'Contrainer No'),
-                _hCell(100, 'Seal No'),
-                _hCell(100, 'Plate'),
-                _hCell(150, 'Driver'),
-                _hCell(110, 'traller Plate'),
-                _hCell(200, 'customer'),
-                _hCell(150, 'Consignee'),
-                _hCell(120, 'Route'),
-                _hCell(150, 'Drop'),
-                _hCell(100, 'Created By'),
-                _hCell(120, 'Created Date'),
-                _hCell(120, 'Update Date'),
-              ],
-            )
-          : Row(
-              children: [
-                _hCell(50, '',
-                    child: Checkbox(
-                        value: isAllSelected,
-                        onChanged: (v) => notifier.selectAll(v ?? false),
-                        activeColor: const Color(0xFFF97316))),
-                _hCell(60, 'Print', align: Alignment.center),
-                _hCell(130, 'Job no'),
-                _hCell(120, 'job start'),
-                _hCell(100, 'ทะเบียนรถ'),
-                _hCell(150, 'พนักงานขับรถ'),
-                _hCell(100, 'ปริมาณน้ำมัน'),
-                _hCell(150, 'JOB Type'),
-                _hCell(120, 'Route'),
-                _hCell(150, 'drop'),
-              ],
-            ),
+          color: isSelected ? const Color(0xFFEFF6FF) : rowColor,
+          border: Border(
+              bottom: BorderSide(color: Colors.grey.shade300, width: 0.5))),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 50,
+            padding: const EdgeInsets.only(top: 4),
+            alignment: Alignment.topCenter,
+            child: Checkbox(
+                value: isSelected,
+                onChanged: (_) => notifier.toggleSelection(uniqueKey),
+                activeColor: const Color(0xFFF97316)),
+          ),
+          _actionCell(
+              60, () => _showPreviewAndPrint(refId, notifier), isPrinted),
+          _dCell(context, 130, item['job_no']),
+          _dCell(context, 120, _formatDateTime(item['job_start'])),
+          _dCell(context, 120, _formatDateTime(item['job_end'])),
+          _dCell(context, 150, item['type_name']),
+          _dCell(context, 150, item['customer_name']),
+          _dCell(context, 100, item['agent']),
+          _dCell(context, 120, item['booking_no']),
+          _dCell(context, 80, item['container_size']),
+          _dCell(context, 120, item['container_no']),
+          _dCell(context, 100, item['seal_desc']),
+          _dCell(context, 100, item['vehicle_name']),
+          _dCell(context, 80, item['veh_code']),
+          _dCell(context, 150, item['driver'], link: true),
+          _dCell(context, 120, _formatDateTime(item['enter_to_work'])),
+          _dCell(context, 120, _formatDateTime(item['out_to_work'])),
+          _dCell(context, 100, item['drop1']),
+          _dCell(context, 100, item['drop2']),
+          _dCell(context, 100, item['drop3']),
+          _dCell(context, 100, item['drop4']),
+        ],
+      ),
     );
   }
 
-  Widget _buildJobRow(
+  Widget _buildOrderRow(
       BuildContext context,
       Map<String, dynamic> item,
       Color rowColor,

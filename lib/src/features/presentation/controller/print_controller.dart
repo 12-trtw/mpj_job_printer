@@ -245,31 +245,45 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     );
 
     try {
-      final String apiUrl = mode == 'job'
-          ? '$_baseUrl/report/order-job'
-          : '$_baseUrl/report/order-fuel';
+      String apiUrl = '';
+      List<Map<String, dynamic>> payload = [];
 
-      final List<Map<String, dynamic>> payload = mode == 'job'
-          ? [
-              {
-                "start_date": startDate,
-                "end_date": endDate,
-                "page": 1,
-                "limit": 999999,
-                "approve_status": "",
-                "cost_status": "",
-                "keyword": ""
-              }
-            ]
-          : [
-              {
-                "job_no": [],
-                "start_date": startDate,
-                "end_date": endDate,
-                "page": 1,
-                "limit": 999999
-              }
-            ];
+      if (mode == 'job') {
+        apiUrl = '$_baseUrl/report/job-info';
+        payload = [
+          {
+            "job_no": [],
+            "start_date": startDate,
+            "end_date": endDate,
+            "page": 1,
+            "limit": 99999
+          }
+        ];
+      } else if (mode == 'order') {
+        apiUrl = '$_baseUrl/report/order-job';
+        payload = [
+          {
+            "start_date": startDate,
+            "end_date": endDate,
+            "page": 1,
+            "limit": 999999,
+            "approve_status": "",
+            "cost_status": "",
+            "keyword": ""
+          }
+        ];
+      } else if (mode == 'fuel') {
+        apiUrl = '$_baseUrl/report/order-fuel';
+        payload = [
+          {
+            "job_no": [],
+            "start_date": startDate,
+            "end_date": endDate,
+            "page": 1,
+            "limit": 99999
+          }
+        ];
+      }
 
       final response = await http
           .post(
@@ -277,7 +291,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
             headers: {'Content-Type': 'application/json', 'license': 'mpj'},
             body: jsonEncode(payload),
           )
-          .timeout(const Duration(seconds: 30));
+          .timeout(const Duration(seconds: 40));
 
       if (response.statusCode != 200) {
         throw Exception('API Error: ${response.statusCode}');
@@ -326,6 +340,37 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       }).toList();
 
       if (found.isEmpty) throw Exception('ไม่พบข้อมูลรายละเอียดจากระบบ');
+
+      if (mode == 'order') {
+        final jobNo = found.first['job_no']?.toString() ?? '';
+        if (jobNo.isEmpty)
+          throw Exception('ไม่สามารถปริ้นได้เนื่องจากไม่มีเลข Job No');
+
+        final payload = [
+          {
+            "job_no": [jobNo],
+            "start_date": "",
+            "end_date": "",
+            "page": 1,
+            "limit": 25
+          }
+        ];
+        final response = await http
+            .post(Uri.parse('$_baseUrl/report/job-info'),
+                headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+                body: jsonEncode(payload))
+            .timeout(const Duration(seconds: 15));
+        if (response.statusCode != 200)
+          throw Exception('API Error: HTTP ${response.statusCode}');
+
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        List<dynamic> data = [];
+        if (decoded is List &&
+            decoded.isNotEmpty &&
+            decoded[0]['status'] == 'success') data = decoded[0]['data'] ?? [];
+        return List<Map<String, dynamic>>.from(data);
+      }
+
       return found;
     } catch (e) {
       throw Exception(e.toString());
@@ -345,6 +390,40 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     }).toList();
 
     if (itemsToPrint.isEmpty) throw Exception('ไม่พบรายละเอียดในระบบ');
+
+    if (state.currentMode == 'order') {
+      final List<String> jobNos = itemsToPrint
+          .map((e) => e['job_no']?.toString() ?? '')
+          .where((n) => n.isNotEmpty)
+          .toList();
+      if (jobNos.isEmpty) throw Exception('ไม่พบเลข Job No ในรายการที่เลือก');
+
+      final payload = [
+        {
+          "job_no": jobNos,
+          "start_date": "",
+          "end_date": "",
+          "page": 1,
+          "limit": 99999
+        }
+      ];
+      final response = await http
+          .post(Uri.parse('$_baseUrl/report/job-info'),
+              headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+              body: jsonEncode(payload))
+          .timeout(const Duration(seconds: 45));
+      if (response.statusCode != 200)
+        throw Exception('API Error: ${response.statusCode}');
+
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      List<dynamic> detailedData = [];
+      if (decoded is List &&
+          decoded.isNotEmpty &&
+          decoded[0]['status'] == 'success')
+        detailedData = decoded[0]['data'] ?? [];
+      return List<Map<String, dynamic>>.from(detailedData);
+    }
+
     return itemsToPrint;
   }
 
@@ -358,7 +437,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         isPrinting: true,
         statusMessage: '⏳ กำลังส่งข้อมูลไปที่เครื่องพิมพ์...');
     try {
-      final rawBytes = mode == 'job'
+      final rawBytes = (mode == 'job' || mode == 'order')
           ? await Lq310FormBuilder().buildPrintBuffer(dataToPrint)
           : await Lq310FuelOrderBuilder().buildPrintBuffer(dataToPrint);
       await _printerService.printRawData(
@@ -374,7 +453,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           .toList();
 
       if (fleetIds.isNotEmpty) {
-        final endpoint = mode == 'job'
+        final endpoint = (mode == 'job' || mode == 'order')
             ? '$_baseUrl/report/update-print-job'
             : '$_baseUrl/report/update-print-fuel';
         final updatePayload = [
