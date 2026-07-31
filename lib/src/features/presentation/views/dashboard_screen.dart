@@ -73,9 +73,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   String _formatDateTime(String? dateString) {
-    if (dateString == null || dateString.isEmpty) return '-';
+    if (dateString == null ||
+        dateString.isEmpty ||
+        dateString.startsWith('0000-00-00')) return '-';
     try {
-      if (dateString.startsWith('0000-00-00')) return '-';
       return DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(dateString));
     } catch (_) {
       return dateString;
@@ -401,11 +402,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                         index +
                                                         1;
 
-                                                final refId = item['job_no'] ??
-                                                    item['fleet_id'] ??
-                                                    globalIndex.toString();
-                                                final uniqueKey =
-                                                    '${refId}_$globalIndex';
+                                                // [MODIFIED] รองรับ order_number กรณีที่ job_no มาเป็น null
+                                                final refId = item['job_no']
+                                                        ?.toString() ??
+                                                    item['order_number']
+                                                        ?.toString() ??
+                                                    item['fleet_id']
+                                                        ?.toString() ??
+                                                    '';
+                                                final uniqueKey = refId
+                                                        .isNotEmpty
+                                                    ? refId
+                                                    : globalIndex.toString();
                                                 final isSelected = state
                                                     .selectedKeys
                                                     .contains(uniqueKey);
@@ -419,7 +427,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                         rowColor,
                                                         notifier,
                                                         uniqueKey,
-                                                        isSelected)
+                                                        isSelected,
+                                                        refId) // ส่ง refId เพื่อใช้ตอนปริ้น
                                                     : _buildFuelRow(
                                                         context,
                                                         item,
@@ -427,7 +436,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                         rowColor,
                                                         notifier,
                                                         uniqueKey,
-                                                        isSelected);
+                                                        isSelected,
+                                                        refId);
                                               },
                                             ),
                                           ),
@@ -528,8 +538,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _showPreviewAndPrint(
-      String? jobNo, PrintDashboardNotifier notifier) async {
-    if (jobNo == null || jobNo.isEmpty) return;
+      String? refId, PrintDashboardNotifier notifier) async {
+    if (refId == null || refId.isEmpty) return;
     final state = ref.read(dashboardProvider);
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -545,7 +555,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     try {
       final previewData =
-          await notifier.getPrintPreviewData(state.currentMode, jobNo);
+          await notifier.getPrintPreviewData(state.currentMode, refId);
       if (!mounted) return;
       Navigator.pop(context);
 
@@ -560,7 +570,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   children: [
                     const Icon(Icons.print, color: Color(0xFFF97316)),
                     const SizedBox(width: 8),
-                    Text('ตัวอย่างข้อมูลก่อนพิมพ์ - $jobNo',
+                    Text('ตัวอย่างข้อมูลก่อนพิมพ์ - $refId',
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 18)),
                   ],
@@ -680,7 +690,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Job No: ${detail['job_no']}',
+                                    Text(
+                                        'Job No: ${detail['job_no'] ?? detail['order_number']}',
                                         style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16)),
@@ -860,7 +871,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       Color rowColor,
       PrintDashboardNotifier notifier,
       String uniqueKey,
-      bool isSelected) {
+      bool isSelected,
+      String refId) {
+    // รับ refId เข้ามาใช้ในปุ่มปริ้น
     return Container(
       constraints: const BoxConstraints(minHeight: 45),
       decoration: BoxDecoration(
@@ -903,7 +916,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _dCell(context, 100, item['create_by'] ?? '-'),
           _dCell(context, 120, _formatDateTime(item['create_date'])),
           _dCell(context, 120, _formatDateTime(item['update_date'])),
-          _actionCell(60, () => _showPreviewAndPrint(item['job_no'], notifier)),
+          _actionCell(
+              60, () => _showPreviewAndPrint(refId, notifier)), // ใช้ refId แทน
         ],
       ),
     );
@@ -916,7 +930,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       Color rowColor,
       PrintDashboardNotifier notifier,
       String uniqueKey,
-      bool isSelected) {
+      bool isSelected,
+      String refId) {
+    // รับ refId เข้ามา
     return Container(
       constraints: const BoxConstraints(minHeight: 45),
       decoration: BoxDecoration(
@@ -946,7 +962,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _dCell(context, 120, item['route_master_name']),
           _dCell(context, 150,
               item['drop_point'] ?? item['route_stations'] ?? '-'),
-          _actionCell(60, () => _showPreviewAndPrint(item['job_no'], notifier)),
+          _actionCell(
+              60, () => _showPreviewAndPrint(refId, notifier)), // ใช้ refId แทน
         ],
       ),
     );
