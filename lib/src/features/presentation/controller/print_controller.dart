@@ -196,14 +196,13 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   }
 
   void changeLimit(int limit) {
-    state = state
-        .copyWith(currentLimit: limit, currentPage: 1, selectedKeys: const {});
+    state = state.copyWith(currentLimit: limit, currentPage: 1);
     _applyLocalFilterAndPagination();
   }
 
   void changePage(int newPage) {
     if (newPage > 0 && newPage <= state.totalPages) {
-      state = state.copyWith(currentPage: newPage, selectedKeys: const {});
+      state = state.copyWith(currentPage: newPage);
       _applyLocalFilterAndPagination();
     }
   }
@@ -376,6 +375,10 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           .map((e) => e['job_no']?.toString() ?? '')
           .where((n) => n.isNotEmpty)
           .toList();
+      if (jobNos.isEmpty) {
+        throw Exception(
+            'ไม่พบเลข Job No ในรายการที่เลือก (ข้อมูลอาจไม่สมบูรณ์)');
+      }
 
       final payload = [
         {

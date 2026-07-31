@@ -75,6 +75,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   String _formatDateTime(String? dateString) {
     if (dateString == null || dateString.isEmpty) return '-';
     try {
+      if (dateString.startsWith('0000-00-00')) return '-';
       return DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(dateString));
     } catch (_) {
       return dateString;
@@ -402,9 +403,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
                                                 final refId = item['job_no'] ??
                                                     item['fleet_id'] ??
-                                                    index.toString();
+                                                    globalIndex.toString();
                                                 final uniqueKey =
-                                                    '${refId}_$index';
+                                                    '${refId}_$globalIndex';
                                                 final isSelected = state
                                                     .selectedKeys
                                                     .contains(uniqueKey);
