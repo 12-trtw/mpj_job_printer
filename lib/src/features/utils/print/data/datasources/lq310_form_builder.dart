@@ -18,7 +18,9 @@ class Lq310FormBuilder {
   }
 
   String _formatThaiDate(String? dateString) {
-    if (dateString == null || dateString.isEmpty) return '';
+    if (dateString == null ||
+        dateString.isEmpty ||
+        dateString.startsWith('0000-00-00')) return '';
     try {
       final d = DateTime.parse(dateString);
       return DateFormat('d MMM yyyy', 'th_TH').format(d);
@@ -28,7 +30,9 @@ class Lq310FormBuilder {
   }
 
   String _formatTime(String? dateString) {
-    if (dateString == null || dateString.isEmpty) return '';
+    if (dateString == null ||
+        dateString.isEmpty ||
+        dateString.startsWith('0000-00-00')) return '';
     try {
       final d = DateTime.parse(dateString);
       return DateFormat('HH:mm', 'th_TH').format(d);
@@ -47,6 +51,7 @@ class Lq310FormBuilder {
       final List<String> formLines = List.filled(33, '');
 
       final jobNo = item['job_no']?.toString() ?? '';
+
       final jobStartStr = item['job_start'] != null
           ? '${_formatThaiDate(item['job_start'])} ${_formatTime(item['job_start'])}'
           : '';

@@ -72,7 +72,9 @@ class Lq310FuelOrderBuilder {
 
       String dateStr = '....................';
       String printTime = '';
-      if (item['finish_date'] != null) {
+
+      if (item['finish_date'] != null &&
+          !item['finish_date'].toString().startsWith('0000-00-00')) {
         try {
           final d = DateTime.parse(item['finish_date'].toString());
           dateStr = DateFormat('d MMM yyyy', 'th_TH').format(d);
@@ -93,7 +95,9 @@ class Lq310FuelOrderBuilder {
           fuelQtyNum > 0 ? fuelQtyNum.toStringAsFixed(2) : '..........';
       final thaiText = fuelQtyNum > 0 ? _toThaiText(fuelQtyNum) : '';
 
+      // [แก้ไข] เอาการดึง order_number ออก ถ้าไม่มี job_no ให้เป็นจุดไข่ปลาไปเลย
       final jobNo = item['job_no']?.toString() ?? '....................';
+
       final mileage =
           item['start_mileage']?.toString() ?? '....................';
 
