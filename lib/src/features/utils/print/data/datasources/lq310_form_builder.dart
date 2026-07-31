@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:charset_converter/charset_converter.dart';
-import 'package:intl/intl.dart';
 import '../../../thai_print_utils.dart';
 
 class Lq310FormBuilder {
@@ -10,6 +9,22 @@ class Lq310FormBuilder {
   static const String escThaiTis620 = '\x1B\x74\x15';
   static const String escThai3Pass = '\x1C\x70\x03';
   static const String font12Cpi = '\x1B\x4D';
+
+  static const List<String> _thaiMonths = [
+    '',
+    'ม.ค.',
+    'ก.พ.',
+    'มี.ค.',
+    'เม.ย.',
+    'พ.ค.',
+    'มิ.ย.',
+    'ก.ค.',
+    'ส.ค.',
+    'ก.ย.',
+    'ต.ค.',
+    'พ.ย.',
+    'ธ.ค.'
+  ];
 
   String _printWithOffset(String text, int downOffset) {
     if (text.isEmpty) text = '';
@@ -23,9 +38,9 @@ class Lq310FormBuilder {
         dateString.startsWith('0000-00-00')) return '';
     try {
       final d = DateTime.parse(dateString);
-      return DateFormat('d MMM yyyy', 'th_TH').format(d);
+      return '${d.day} ${_thaiMonths[d.month]} ${d.year + 543}';
     } catch (_) {
-      return dateString;
+      return dateString.split(RegExp(r'[ T]')).first;
     }
   }
 
@@ -35,9 +50,16 @@ class Lq310FormBuilder {
         dateString.startsWith('0000-00-00')) return '';
     try {
       final d = DateTime.parse(dateString);
-      return DateFormat('HH:mm', 'th_TH').format(d);
+      final hh = d.hour.toString().padLeft(2, '0');
+      final mm = d.minute.toString().padLeft(2, '0');
+      return '$hh:$mm';
     } catch (_) {
-      return dateString;
+      final parts = dateString.split(RegExp(r'[ T]'));
+      if (parts.length > 1) {
+        final timeStr = parts[1];
+        return timeStr.length >= 5 ? timeStr.substring(0, 5) : timeStr;
+      }
+      return '';
     }
   }
 
@@ -50,11 +72,26 @@ class Lq310FormBuilder {
           '$escInit$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThai3Pass';
       final List<String> formLines = List.filled(33, '');
 
-      final jobNo = item['job_no']?.toString() ?? '';
+      final jobNo =
+          item['job_no']?.toString() ?? item['order_number']?.toString() ?? '';
 
-      final jobStartStr = item['job_start'] != null
-          ? '${_formatThaiDate(item['job_start'])} ${_formatTime(item['job_start'])}'
+      final String? actualJobStart =
+          (item['job_start'] != null && item['job_start'].toString().isNotEmpty)
+              ? item['job_start'].toString()
+              : item['order_start_date']?.toString();
+
+      final String? actualJobEnd =
+          (item['job_end'] != null && item['job_end'].toString().isNotEmpty)
+              ? item['job_end'].toString()
+              : item['order_end_date']?.toString();
+
+      final jobStartStr = actualJobStart != null && actualJobStart.isNotEmpty
+          ? '${_formatThaiDate(actualJobStart)} ${_formatTime(actualJobStart)}'
           : '';
+
+      final jobEndDate = _formatThaiDate(actualJobEnd);
+      final jobEndTime = _formatTime(actualJobEnd);
+
       final customer = item['customer_name']?.toString() ?? '';
       final bookingNo = item['booking_no']?.toString() ?? '';
 
@@ -66,9 +103,6 @@ class Lq310FormBuilder {
       final drop2 = item['drop2']?.toString() ?? '';
       final drop3 = item['drop3']?.toString() ?? '';
       final drop4 = item['drop4']?.toString() ?? '';
-
-      final jobEndDate = _formatThaiDate(item['job_end']);
-      final jobEndTime = _formatTime(item['job_end']);
 
       final driver = item['driver']?.toString() ?? '';
       final carNo = item['vehicle_name']?.toString() ?? '';

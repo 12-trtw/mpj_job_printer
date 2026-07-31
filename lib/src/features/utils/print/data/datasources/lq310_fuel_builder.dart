@@ -95,7 +95,9 @@ class Lq310FuelOrderBuilder {
           fuelQtyNum > 0 ? fuelQtyNum.toStringAsFixed(2) : '..........';
       final thaiText = fuelQtyNum > 0 ? _toThaiText(fuelQtyNum) : '';
 
-      final jobNo = item['job_no']?.toString() ?? '....................';
+      final jobNo = item['job_no']?.toString() ??
+          item['order_number']?.toString() ??
+          '....................';
 
       final mileage =
           item['start_mileage']?.toString() ?? '....................';
