@@ -333,7 +333,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               child: TextField(
                                 controller: _keywordCtrl,
                                 decoration: const InputDecoration(
-                                    labelText: 'ค้นหาในตาราง (Real-time)...',
+                                    labelText: 'ค้นหาในตาราง...',
                                     isDense: true,
                                     border: OutlineInputBorder(),
                                     prefixIcon: Icon(Icons.search, size: 18)),
@@ -343,18 +343,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue.shade700,
-                                  foregroundColor: Colors.white,
-                                  fixedSize: const Size.fromHeight(35)),
-                              onPressed: () =>
-                                  notifier.filterLocal(_keywordCtrl.text),
-                              icon: const Icon(Icons.search, size: 16),
-                              label: const Text('ค้นหา',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                            ),
+                            // ElevatedButton.icon(
+                            //   style: ElevatedButton.styleFrom(
+                            //       backgroundColor: Colors.blue.shade700,
+                            //       foregroundColor: Colors.white,
+                            //       fixedSize: const Size.fromHeight(35)),
+                            //   onPressed: () =>
+                            //       notifier.filterLocal(_keywordCtrl.text),
+                            //   icon: const Icon(Icons.search, size: 16),
+                            //   label: const Text('ค้นหา',
+                            //       style:
+                            //           TextStyle(fontWeight: FontWeight.bold)),
+                            // ),
                           ],
                         ),
                         if (state.statusMessage.isNotEmpty)
@@ -559,7 +559,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final state = ref.read(dashboardProvider);
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('กรุณาเลือกเครื่องพิมพ์ก่อนครับ'),
+          content: Text('กรุณาเลือกเครื่องพิมพ์ก่อน'),
           backgroundColor: Colors.red));
       return;
     }
@@ -874,18 +874,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     activeColor: const Color(0xFFF97316))),
             _hCell(60, 'Print', align: Alignment.center),
             _hCell(130, 'Order No'),
-            _hCell(130, 'JOB NO'),
-            _hCell(120, 'Job start'),
-            _hCell(120, 'Job End'),
             _hCell(150, 'Job Type'),
             _hCell(120, 'Vessel'),
             _hCell(120, 'Booking BL'),
             _hCell(110, 'Contrainer Size'),
             _hCell(120, 'Contrainer No'),
             _hCell(100, 'Seal No'),
-            _hCell(100, 'Plate'),
-            _hCell(150, 'Driver'),
-            _hCell(110, 'traller Plate'),
             _hCell(200, 'customer'),
             _hCell(150, 'Consignee'),
             _hCell(120, 'Route'),
@@ -1011,19 +1005,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _actionCell(
               60, () => _showPreviewAndPrint(refId, notifier), isPrinted),
           _dCell(context, 130, item['order_number']),
-          _dCell(context, 130, item['job_no']),
-          _dCell(context, 120, _formatDateTime(item['job_start'])),
-          _dCell(context, 120, _formatDateTime(item['job_end'])),
           _dCell(context, 150, item['type_name'] ?? item['job_type_name']),
           _dCell(context, 120, item['vessel']),
           _dCell(context, 120, item['booking_bl']),
           _dCell(context, 110, item['container_size']),
           _dCell(context, 120, item['container_no']),
           _dCell(context, 100, item['seal_no'] ?? '-'),
-          _dCell(context, 100, item['vehicle_name']),
-          _dCell(context, 150, item['driver_name'] ?? item['driver'],
-              link: true),
-          _dCell(context, 110, item['trailer_name'] ?? '-', link: true),
           _dCell(context, 200, item['customer_name']),
           _dCell(context, 150, item['consignee_name'] ?? '-'),
           _dCell(context, 120, item['route_master_name']),
