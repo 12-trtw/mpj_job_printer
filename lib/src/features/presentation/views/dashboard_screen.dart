@@ -362,7 +362,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   controller: _horizontalScrollController,
                                   scrollDirection: Axis.horizontal,
                                   child: SizedBox(
-                                    // ขยายความกว้างเพื่อรองรับคอลัมน์ Order No
                                     width: _selectedMode == 'job' ? 2750 : 1200,
                                     child: Column(
                                       children: [
@@ -567,6 +566,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _previewText('เครื่องพิมพ์:', state.selectedPrinter,
+                          isHighlight: true),
+                      const Divider(),
                       _previewText('ประเภทงาน:', detail['type_name']),
                       _previewText('ทะเบียนรถ:', detail['vehicle_name']),
                       _previewText(
@@ -654,6 +656,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       const Text(
                           'รายการต่อไปนี้จะถูกส่งเข้าเครื่องพิมพ์ตามลำดับ:',
                           style: TextStyle(fontSize: 14)),
+                      const SizedBox(height: 8),
+                      Text('🖨️ เครื่องพิมพ์ปลายทาง: ${state.selectedPrinter}',
+                          style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2563EB))),
                       const SizedBox(height: 12),
                       Expanded(
                         child: ListView.builder(
@@ -720,7 +728,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
-  Widget _previewText(String label, dynamic value) {
+  Widget _previewText(String label, dynamic value, {bool isHighlight = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -729,11 +737,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           SizedBox(
               width: 100,
               child: Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey))),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color:
+                          isHighlight ? Colors.blue.shade700 : Colors.grey))),
           Expanded(
               child: Text(value?.toString() ?? '-',
-                  style: const TextStyle(fontWeight: FontWeight.bold))),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isHighlight
+                          ? Colors.blue.shade700
+                          : Colors.black87))),
         ],
       ),
     );

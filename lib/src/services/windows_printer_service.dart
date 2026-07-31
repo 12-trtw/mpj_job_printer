@@ -46,7 +46,8 @@ class WindowsPrinterService {
 
     try {
       await tempFile.writeAsBytes(rawTis620Bytes);
-      final String networkPrinterPath = '"\\\\localhost\\$printerName"';
+
+      final String networkPrinterPath = '\\\\localhost\\$printerName';
 
       final ProcessResult printResult = await Process.run(
         'cmd.exe',
@@ -55,7 +56,8 @@ class WindowsPrinterService {
       );
 
       if (printResult.exitCode != 0) {
-        throw Exception('เกิดข้อผิดพลาดในการพิมพ์: ${printResult.stderr}');
+        throw Exception(
+            'เกิดข้อผิดพลาดในการพิมพ์!\nเป้าหมาย: $networkPrinterPath\nสาเหตุ: ${printResult.stderr}');
       }
     } finally {
       if (await tempFile.exists()) {
