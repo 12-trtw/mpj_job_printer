@@ -23,6 +23,7 @@ class PrintDashboardState {
   final String currentEndDate;
   final String currentKeyword;
   final int currentLimit;
+  final bool isDemoMode;
 
   PrintDashboardState({
     this.isLoading = false,
@@ -40,6 +41,7 @@ class PrintDashboardState {
     this.currentEndDate = '',
     this.currentKeyword = '',
     this.currentLimit = 25,
+    this.isDemoMode = false,
   });
 
   PrintDashboardState copyWith({
@@ -58,6 +60,7 @@ class PrintDashboardState {
     String? currentEndDate,
     String? currentKeyword,
     int? currentLimit,
+    bool? isDemoMode,
   }) {
     return PrintDashboardState(
       isLoading: isLoading ?? this.isLoading,
@@ -75,6 +78,7 @@ class PrintDashboardState {
       currentEndDate: currentEndDate ?? this.currentEndDate,
       currentKeyword: currentKeyword ?? this.currentKeyword,
       currentLimit: currentLimit ?? this.currentLimit,
+      isDemoMode: isDemoMode ?? this.isDemoMode,
     );
   }
 }
@@ -84,6 +88,29 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
   PrintDashboardNotifier() : super(PrintDashboardState()) {
     fetchPrinters();
+  }
+
+  String get _baseUrl => state.isDemoMode
+      ? 'http://tmsthai.com:9100/mpj-v1' //Demo
+      : 'https://tms.mpjdc.com:7049'; //Production
+
+  void setEnvironment(bool isDemo) {
+    if (state.isDemoMode == isDemo) return;
+
+    state = state.copyWith(
+        isDemoMode: isDemo,
+        statusMessage: isDemo
+            ? 'เปลี่ยนเป็นโหมด Demo แล้ว'
+            : 'เปลี่ยนเป็นโหมด Production แล้ว');
+
+    fetchJobs(
+      mode: state.currentMode,
+      startDate: state.currentStartDate,
+      endDate: state.currentEndDate,
+      keyword: state.currentKeyword,
+      page: 1,
+      limit: state.currentLimit,
+    );
   }
 
   void setPrinter(String? printerName) {
@@ -156,8 +183,8 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
     try {
       final String apiUrl = mode == 'job'
-          ? 'http://tmsthai.com:9100/mpj-v1/report/order-job'
-          : 'http://tmsthai.com:9100/mpj-v1/report/order-fuel';
+          ? '$_baseUrl/report/order-job'
+          : '$_baseUrl/report/order-fuel';
 
       final List<Map<String, dynamic>> payload = mode == 'job'
           ? [
@@ -240,8 +267,8 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       String mode, String jobNo) async {
     try {
       final String apiUrl = mode == 'job'
-          ? 'http://tmsthai.com:9100/mpj-v1/report/job-info'
-          : 'http://tmsthai.com:9100/mpj-v1/report/order-fuel';
+          ? '$_baseUrl/report/job-info'
+          : '$_baseUrl/report/order-fuel';
 
       final payload = [
         {
@@ -316,7 +343,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       ];
       final response = await http
           .post(
-            Uri.parse('http://tmsthai.com:9100/mpj-v1/report/job-info'),
+            Uri.parse('$_baseUrl/report/job-info'),
             headers: {'Content-Type': 'application/json', 'license': 'mpj'},
             body: jsonEncode(payload),
           )
@@ -370,7 +397,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     }
   }
 
-  // [NEW] ฟังก์ชันสั่งพิมพ์หลายรายการที่ขาดไป
   Future<void> printSelectedJobs() async {
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
       state = state.copyWith(statusMessage: '❌ กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
@@ -421,7 +447,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         ];
         final response = await http
             .post(
-              Uri.parse('http://tmsthai.com:9100/mpj-v1/report/job-info'),
+              Uri.parse('$_baseUrl/report/job-info'),
               headers: {'Content-Type': 'application/json', 'license': 'mpj'},
               body: jsonEncode(payload),
             )

@@ -106,11 +106,76 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
                 const Spacer(),
-                const Icon(Icons.person, color: Colors.white),
+
+                // [NEW] ป้ายเตือนโหมด Demo
+                if (state.isDemoMode)
+                  Container(
+                    margin: const EdgeInsets.only(right: 16),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                        color: Colors.red.shade600,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.white, width: 1)),
+                    child: const Text('DEMO MODE',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13)),
+                  ),
+
+                // [NEW] ปุ่มฟันเฟืองสำหรับเลือกโหมด Environment
+                PopupMenuButton<bool>(
+                  icon: const Icon(Icons.settings, color: Colors.white),
+                  tooltip: 'ตั้งค่าระบบ (Environment)',
+                  offset: const Offset(0, 45),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  onSelected: (bool isDemo) {
+                    notifier.setEnvironment(isDemo);
+                  },
+                  itemBuilder: (BuildContext context) => [
+                    PopupMenuItem<bool>(
+                      value: false,
+                      child: Row(
+                        children: [
+                          Icon(Icons.rocket_launch,
+                              color: !state.isDemoMode
+                                  ? Colors.green
+                                  : Colors.grey,
+                              size: 20),
+                          const SizedBox(width: 12),
+                          Text('Production',
+                              style: TextStyle(
+                                  fontWeight: !state.isDemoMode
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  fontSize: 16)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuDivider(),
+                    PopupMenuItem<bool>(
+                      value: true,
+                      child: Row(
+                        children: [
+                          Icon(Icons.bug_report,
+                              color:
+                                  state.isDemoMode ? Colors.red : Colors.grey,
+                              size: 20),
+                          const SizedBox(width: 12),
+                          Text('Demo',
+                              style: TextStyle(
+                                  fontWeight: state.isDemoMode
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  fontSize: 16)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(width: 8),
-                Text('Administrator',
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.9), fontSize: 13)),
               ],
             ),
           ),
@@ -195,7 +260,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   onPressed: (state.selectedKeys.isEmpty ||
                                           state.isPrinting)
                                       ? null
-                                      : () => notifier.printSelectedJobs(),
+                                      : () =>
+                                          _showBatchPreviewAndPrint(notifier),
                                   icon: state.isPrinting
                                       ? const SizedBox(
                                           width: 16,
@@ -536,6 +602,116 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     },
                     icon: const Icon(Icons.print, size: 18),
                     label: const Text('ยืนยันสั่งพิมพ์'),
+                  )
+                ],
+              ));
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+    }
+  }
+
+  void _showBatchPreviewAndPrint(PrintDashboardNotifier notifier) async {
+    final state = ref.read(dashboardProvider);
+    if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('กรุณาเลือกเครื่องพิมพ์ก่อนครับ'),
+          backgroundColor: Colors.red));
+      return;
+    }
+
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()));
+
+    try {
+      final previewData = await notifier.getBatchPrintPreviewData();
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      if (previewData == null || previewData.isEmpty) {
+        throw Exception('ไม่พบข้อมูลสำหรับปริ้น');
+      }
+
+      showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+                title: Row(
+                  children: [
+                    const Icon(Icons.print, color: Color(0xFFF97316)),
+                    const SizedBox(width: 8),
+                    Text('ตัวอย่างก่อนพิมพ์ (${previewData.length} รายการ)',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18)),
+                  ],
+                ),
+                content: SizedBox(
+                  width: 500,
+                  height: 400,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                          'รายการต่อไปนี้จะถูกส่งเข้าเครื่องพิมพ์ตามลำดับ:',
+                          style: TextStyle(fontSize: 14)),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: previewData.length,
+                          itemBuilder: (context, index) {
+                            final detail = previewData[index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Job No: ${detail['job_no']}',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16)),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                        'ทะเบียนรถ: ${detail['vehicle_name'] ?? '-'} | คนขับ: ${detail['driver_name'] ?? detail['driver'] ?? '-'}',
+                                        style: const TextStyle(fontSize: 14)),
+                                    if (_selectedMode == 'job')
+                                      Text(
+                                          'เบอร์ตู้: ${detail['container_size'] ?? ''} ${detail['container_no'] ?? ''}',
+                                          style: const TextStyle(fontSize: 14)),
+                                    if (_selectedMode == 'fuel')
+                                      Text(
+                                          'ปริมาณน้ำมัน: ${detail['fuel_qty'] ?? 0} ลิตร',
+                                          style: const TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('ยกเลิก',
+                          style: TextStyle(color: Colors.grey, fontSize: 16))),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF97316),
+                        foregroundColor: Colors.white),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      notifier.executePrint(_selectedMode, previewData);
+                    },
+                    icon: const Icon(Icons.print, size: 18),
+                    label: const Text('ยืนยันสั่งพิมพ์ทั้งหมด',
+                        style: TextStyle(fontSize: 16)),
                   )
                 ],
               ));

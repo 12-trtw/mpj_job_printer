@@ -46,10 +46,11 @@ class WindowsPrinterService {
 
     try {
       await tempFile.writeAsBytes(rawTis620Bytes);
+      final String networkPrinterPath = '"\\\\localhost\\$printerName"';
 
       final ProcessResult printResult = await Process.run(
         'cmd.exe',
-        ['/c', 'copy', '/B', tempFilePath, r'\\localhost\LQ310'],
+        ['/c', 'copy', '/B', tempFilePath, networkPrinterPath],
         runInShell: true,
       );
 
