@@ -100,10 +100,10 @@ class Lq310FuelOrderBuilder {
 
       lines.add('');
       lines.add(
-          '$font10Cpi                     MPJ Logistics Public Company Limited$font15Cpi');
+          '$font10Cpi           MPJ Logistics Public Company Limited$font15Cpi');
       lines.add('');
       lines.add(
-          '                                                [ ใบสั่งเติมน้ำมัน ]\t.         เลขที่ใบสั่งเติม $fleetId');
+          '                                      [ ใบสั่งเติมน้ำมัน ]\t.         เลขที่ใบสั่งเติม $fleetId');
       lines.add('-' * 112);
       lines.add('');
 

@@ -371,7 +371,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           "start_date": "",
           "end_date": "",
           "page": 1,
-          "limit": 999
+          "limit": 99999
         }
       ];
 
