@@ -402,7 +402,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                         index +
                                                         1;
 
-                                                // [MODIFIED] รองรับ order_number กรณีที่ job_no มาเป็น null
                                                 final refId = item['job_no']
                                                         ?.toString() ??
                                                     item['order_number']
@@ -428,7 +427,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                         notifier,
                                                         uniqueKey,
                                                         isSelected,
-                                                        refId) // ส่ง refId เพื่อใช้ตอนปริ้น
+                                                        refId)
                                                     : _buildFuelRow(
                                                         context,
                                                         item,
@@ -873,7 +872,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       String uniqueKey,
       bool isSelected,
       String refId) {
-    // รับ refId เข้ามาใช้ในปุ่มปริ้น
     return Container(
       constraints: const BoxConstraints(minHeight: 45),
       decoration: BoxDecoration(
@@ -916,8 +914,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _dCell(context, 100, item['create_by'] ?? '-'),
           _dCell(context, 120, _formatDateTime(item['create_date'])),
           _dCell(context, 120, _formatDateTime(item['update_date'])),
-          _actionCell(
-              60, () => _showPreviewAndPrint(refId, notifier)), // ใช้ refId แทน
+          _actionCell(60, () => _showPreviewAndPrint(refId, notifier)),
         ],
       ),
     );
@@ -932,7 +929,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       String uniqueKey,
       bool isSelected,
       String refId) {
-    // รับ refId เข้ามา
     return Container(
       constraints: const BoxConstraints(minHeight: 45),
       decoration: BoxDecoration(
@@ -962,8 +958,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _dCell(context, 120, item['route_master_name']),
           _dCell(context, 150,
               item['drop_point'] ?? item['route_stations'] ?? '-'),
-          _actionCell(
-              60, () => _showPreviewAndPrint(refId, notifier)), // ใช้ refId แทน
+          _actionCell(60, () => _showPreviewAndPrint(refId, notifier)),
         ],
       ),
     );
