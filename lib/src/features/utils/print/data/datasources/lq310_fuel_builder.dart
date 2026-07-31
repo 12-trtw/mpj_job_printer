@@ -61,7 +61,7 @@ class Lq310FuelOrderBuilder {
 
   Future<Uint8List> buildPrintBuffer(
       List<Map<String, dynamic>> printData) async {
-    final String escSetTab = '\x1B\x44${String.fromCharCode(70)}\x00';
+    final String escSetTab = '\x1B\x44${String.fromCharCode(60)}\x00';
     final StringBuffer contentBuffer = StringBuffer();
 
     for (final item in printData) {
@@ -145,15 +145,15 @@ class Lq310FuelOrderBuilder {
       lines.add('ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้');
 
       final sig1Left = _padRight('ลงชื่อ', 8) +
-          _padRight('...................', 25) +
+          _padRight('...................', 22) +
           'พนักงานขับรถ';
       final sig1Right = _padRight('ลงชื่อ', 8) +
-          _padRight('...................', 25) +
+          _padRight('...................', 22) +
           'ผู้สั่งเติม';
       lines.add('$sig1Left\t$sig1Right');
 
       final sig2Left = _padRight('ลงชื่อ', 8) +
-          _padRight('...................', 25) +
+          _padRight('...................', 22) +
           'พนักงานปั๊มน้ำมัน';
       final sig2Right = 'User ID : Admin      $printTime';
       lines.add('$sig2Left\t$sig2Right');
