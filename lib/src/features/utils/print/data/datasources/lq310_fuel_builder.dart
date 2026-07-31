@@ -95,7 +95,6 @@ class Lq310FuelOrderBuilder {
           fuelQtyNum > 0 ? fuelQtyNum.toStringAsFixed(2) : '..........';
       final thaiText = fuelQtyNum > 0 ? _toThaiText(fuelQtyNum) : '';
 
-      // [แก้ไข] เอาการดึง order_number ออก ถ้าไม่มี job_no ให้เป็นจุดไข่ปลาไปเลย
       final jobNo = item['job_no']?.toString() ?? '....................';
 
       final mileage =
