@@ -97,7 +97,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
   String get _baseUrl => state.isDemoMode
       ? 'http://tmsthai.com:9100/mpj-v1'
-      : 'https://tms.mpjdc.com:7049';
+      : 'https://tms.mpjdc.com:7049/mpj-v1';
 
   void setEnvironment(bool isDemo) {
     if (state.isDemoMode == isDemo) return;
