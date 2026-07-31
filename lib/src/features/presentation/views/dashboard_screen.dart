@@ -333,7 +333,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               child: TextField(
                                 controller: _keywordCtrl,
                                 decoration: const InputDecoration(
-                                    labelText: 'ค้นหาในตาราง...',
+                                    labelText: 'ค้นหาในตาราง (Real-time)...',
                                     isDense: true,
                                     border: OutlineInputBorder(),
                                     prefixIcon: Icon(Icons.search, size: 18)),
@@ -343,18 +343,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            // ElevatedButton.icon(
-                            //   style: ElevatedButton.styleFrom(
-                            //       backgroundColor: Colors.blue.shade700,
-                            //       foregroundColor: Colors.white,
-                            //       fixedSize: const Size.fromHeight(35)),
-                            //   onPressed: () =>
-                            //       notifier.filterLocal(_keywordCtrl.text),
-                            //   icon: const Icon(Icons.search, size: 16),
-                            //   label: const Text('ค้นหา',
-                            //       style:
-                            //           TextStyle(fontWeight: FontWeight.bold)),
-                            // ),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue.shade700,
+                                  foregroundColor: Colors.white,
+                                  fixedSize: const Size.fromHeight(35)),
+                              onPressed: () =>
+                                  notifier.filterLocal(_keywordCtrl.text),
+                              icon: const Icon(Icons.search, size: 16),
+                              label: const Text('ค้นหา',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                            ),
                           ],
                         ),
                         if (state.statusMessage.isNotEmpty)
@@ -385,10 +385,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   controller: _horizontalScrollController,
                                   scrollDirection: Axis.horizontal,
                                   child: SizedBox(
+                                    // ปรับความกว้างของโหมด Order ให้สั้นลง เพราะลบคอลัมน์ออกไปเยอะ
                                     width: state.currentMode == 'job'
                                         ? 2500
                                         : (state.currentMode == 'order'
-                                            ? 2700
+                                            ? 1900
                                             : 1150),
                                     child: Column(
                                       children: [
@@ -559,7 +560,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final state = ref.read(dashboardProvider);
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('กรุณาเลือกเครื่องพิมพ์ก่อน'),
+          content: Text('กรุณาเลือกเครื่องพิมพ์ก่อนครับ'),
           backgroundColor: Colors.red));
       return;
     }
@@ -874,12 +875,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     activeColor: const Color(0xFFF97316))),
             _hCell(60, 'Print', align: Alignment.center),
             _hCell(130, 'Order No'),
+            // ตัด Job no ทิ้งไป
+            // ตัด order_start_date, order_end_date ทิ้งไป
             _hCell(150, 'Job Type'),
             _hCell(120, 'Vessel'),
             _hCell(120, 'Booking BL'),
             _hCell(110, 'Contrainer Size'),
             _hCell(120, 'Contrainer No'),
             _hCell(100, 'Seal No'),
+            // ตัด Plate, Driver, Trailer ทิ้งไป
             _hCell(200, 'customer'),
             _hCell(150, 'Consignee'),
             _hCell(120, 'Route'),
@@ -918,6 +922,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
+  // 📋 แท็บรายการ JOB
   Widget _buildJobInfoRow(
       BuildContext context,
       Map<String, dynamic> item,
@@ -973,6 +978,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  // 📋 แท็บรายการ ORDER
   Widget _buildOrderRow(
       BuildContext context,
       Map<String, dynamic> item,
@@ -1005,25 +1011,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _actionCell(
               60, () => _showPreviewAndPrint(refId, notifier), isPrinted),
           _dCell(context, 130, item['order_number']),
+          // ตัด 6 คอลัมน์ที่ไม่ได้ใช้งานออก
           _dCell(context, 150, item['type_name'] ?? item['job_type_name']),
-          _dCell(context, 120, item['vessel']),
-          _dCell(context, 120, item['booking_bl']),
+          _dCell(context, 120, item['vessel'] ?? '-'),
+          _dCell(context, 120, item['booking_no'] ?? '-'),
           _dCell(context, 110, item['container_size']),
-          _dCell(context, 120, item['container_no']),
-          _dCell(context, 100, item['seal_no'] ?? '-'),
+          _dCell(context, 120, item['container_no'] ?? '-'),
+          _dCell(context, 100, item['seal_desc'] ?? '-'),
           _dCell(context, 200, item['customer_name']),
           _dCell(context, 150, item['consignee_name'] ?? '-'),
           _dCell(context, 120, item['route_master_name']),
           _dCell(context, 150,
-              item['route_stations'] ?? item['station_place'] ?? '-'),
+              item['route_stations'] ?? item['drop_point'] ?? '-'),
           _dCell(context, 100, item['create_by'] ?? '-'),
           _dCell(context, 120, _formatDateTime(item['create_date'])),
-          _dCell(context, 120, _formatDateTime(item['update_date'])),
+          _dCell(context, 120, _formatDateTime(item['updated_date'])),
         ],
       ),
     );
   }
 
+  // ⛽ แท็บรายการเติมน้ำมัน
   Widget _buildFuelRow(
       BuildContext context,
       Map<String, dynamic> item,
