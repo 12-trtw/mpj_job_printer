@@ -106,8 +106,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
                 const Spacer(),
-
-                // [NEW] ป้ายเตือนโหมด Demo
                 if (state.isDemoMode)
                   Container(
                     margin: const EdgeInsets.only(right: 16),
@@ -123,8 +121,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             fontWeight: FontWeight.bold,
                             fontSize: 13)),
                   ),
-
-                // [NEW] ปุ่มฟันเฟืองสำหรับเลือกโหมด Environment
                 PopupMenuButton<bool>(
                   icon: const Icon(Icons.settings, color: Colors.white),
                   tooltip: 'ตั้งค่าระบบ (Environment)',
@@ -366,7 +362,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   controller: _horizontalScrollController,
                                   scrollDirection: Axis.horizontal,
                                   child: SizedBox(
-                                    width: _selectedMode == 'job' ? 2600 : 1200,
+                                    // ขยายความกว้างเพื่อรองรับคอลัมน์ Order No
+                                    width: _selectedMode == 'job' ? 2750 : 1200,
                                     child: Column(
                                       children: [
                                         _buildTableHeader(state, notifier),
@@ -792,6 +789,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         onChanged: (v) => notifier.selectAll(v ?? false),
                         activeColor: const Color(0xFFF97316))),
                 _hCell(50, 'NO#'),
+                _hCell(130, 'Order No'), // เพิ่มคอลัมน์ Order No
                 _hCell(130, 'JOB NO'),
                 _hCell(120, 'Job start'),
                 _hCell(120, 'Job End'),
@@ -864,6 +862,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           _dCell(context, 50, globalIndex.toString(),
               align: Alignment.topCenter),
+          _dCell(context, 130, item['order_number']), // แสดงข้อมูล Order No
           _dCell(context, 130, item['job_no']),
           _dCell(context, 120, _formatDateTime(item['job_start'])),
           _dCell(context, 120, _formatDateTime(item['job_end'])),

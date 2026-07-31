@@ -14,7 +14,6 @@ class PrintDashboardState {
   final Set<String> selectedKeys;
   final List<String> availablePrinters;
   final String? selectedPrinter;
-
   final int currentPage;
   final int totalPages;
   final int totalItems;
