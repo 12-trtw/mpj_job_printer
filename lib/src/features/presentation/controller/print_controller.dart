@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,7 +44,7 @@ class PrintDashboardState {
     this.currentStartDate = '',
     this.currentEndDate = '',
     this.currentKeyword = '',
-    this.currentLimit = 999999,
+    this.currentLimit = 10,
     this.isDemoMode = false,
   });
 
@@ -103,6 +102,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
   void setEnvironment(bool isDemo) {
     if (state.isDemoMode == isDemo) return;
+
     state = state.copyWith(
         isDemoMode: isDemo,
         statusMessage: isDemo
@@ -122,10 +122,11 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
   void toggleSelection(String key) {
     final newKeys = Set<String>.from(state.selectedKeys);
-    if (newKeys.contains(key))
+    if (newKeys.contains(key)) {
       newKeys.remove(key);
-    else
+    } else {
       newKeys.add(key);
+    }
     state = state.copyWith(selectedKeys: newKeys);
   }
 
@@ -144,6 +145,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
   void _applyLocalFilterAndPagination() {
     List<Map<String, dynamic>> filtered = state.allJobs;
+
     if (state.currentKeyword.trim().isNotEmpty) {
       final lowerKey = state.currentKeyword.trim().toLowerCase();
       filtered = state.allJobs.where((item) {
@@ -153,6 +155,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         });
       }).toList();
     }
+
     final totalItems = filtered.length;
     final limit = state.currentLimit;
 
@@ -276,7 +279,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
             headers: {'Content-Type': 'application/json', 'license': 'mpj'},
             body: jsonEncode(payload),
           )
-          .timeout(const Duration(seconds: 30));
+          .timeout(const Duration(seconds: 25));
 
       if (response.statusCode != 200) {
         throw Exception('API Error: ${response.statusCode}');
@@ -311,6 +314,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       final String apiUrl = mode == 'job'
           ? '$_baseUrl/report/job-info'
           : '$_baseUrl/report/order-fuel';
+
       final payload = [
         {
           "job_no": [jobNo],
@@ -322,21 +326,27 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       ];
 
       final response = await http
-          .post(Uri.parse(apiUrl),
-              headers: {'Content-Type': 'application/json', 'license': 'mpj'},
-              body: jsonEncode(payload))
+          .post(
+            Uri.parse(apiUrl),
+            headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+            body: jsonEncode(payload),
+          )
           .timeout(const Duration(seconds: 15));
-      if (response.statusCode != 200)
+
+      if (response.statusCode != 200) {
         throw Exception('API Error: HTTP ${response.statusCode}');
+      }
 
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       List<dynamic> data = [];
+
       if (decoded is List &&
           decoded.isNotEmpty &&
-          decoded[0]['status'] == 'success')
+          decoded[0]['status'] == 'success') {
         data = decoded[0]['data'] ?? [];
-      else if (decoded is Map && decoded['status'] == 'success')
+      } else if (decoded is Map && decoded['status'] == 'success') {
         data = decoded['data'] ?? [];
+      }
 
       if (data.isEmpty) throw Exception('ไม่พบข้อมูลรายละเอียดจากระบบ');
       return List<Map<String, dynamic>>.from(data);
@@ -346,8 +356,9 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   }
 
   Future<List<Map<String, dynamic>>?> getBatchPrintPreviewData() async {
-    if (state.selectedKeys.isEmpty)
+    if (state.selectedKeys.isEmpty) {
       throw Exception('กรุณาเลือกรายการที่ต้องการพิมพ์');
+    }
 
     final itemsToPrint = state.jobs
         .asMap()
@@ -365,6 +376,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           .map((e) => e['job_no']?.toString() ?? '')
           .where((n) => n.isNotEmpty)
           .toList();
+
       final payload = [
         {
           "job_no": jobNos,
@@ -376,21 +388,26 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       ];
 
       final response = await http
-          .post(Uri.parse('$_baseUrl/report/job-info'),
-              headers: {'Content-Type': 'application/json', 'license': 'mpj'},
-              body: jsonEncode(payload))
-          .timeout(const Duration(seconds: 45));
-      if (response.statusCode != 200)
+          .post(
+            Uri.parse('$_baseUrl/report/job-info'),
+            headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode != 200) {
         throw Exception('API Error: ${response.statusCode}');
+      }
 
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       List<dynamic> detailedData = [];
       if (decoded is List &&
           decoded.isNotEmpty &&
-          decoded[0]['status'] == 'success')
+          decoded[0]['status'] == 'success') {
         detailedData = decoded[0]['data'] ?? [];
-      else if (decoded is Map && decoded['status'] == 'success')
+      } else if (decoded is Map && decoded['status'] == 'success') {
         detailedData = decoded['data'] ?? [];
+      }
 
       if (detailedData.isEmpty) throw Exception('ไม่พบรายละเอียดในระบบ');
       return List<Map<String, dynamic>>.from(detailedData);
@@ -405,6 +422,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       state = state.copyWith(statusMessage: '❌ กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
       return;
     }
+
     state = state.copyWith(
         isPrinting: true,
         statusMessage: '⏳ กำลังส่งข้อมูลไปที่เครื่องพิมพ์...');
@@ -412,6 +430,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       final rawBytes = mode == 'job'
           ? await Lq310FormBuilder().buildPrintBuffer(dataToPrint)
           : await Lq310FuelOrderBuilder().buildPrintBuffer(dataToPrint);
+
       await _printerService.printRawData(
           printerName: state.selectedPrinter!, rawTis620Bytes: rawBytes);
       state = state.copyWith(
@@ -458,6 +477,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
             .map((e) => e['job_no']?.toString() ?? '')
             .where((n) => n.isNotEmpty)
             .toList();
+
         state = state.copyWith(
             statusMessage:
                 '⏳ กำลังดึงรายละเอียดงาน ${jobNos.length} รายการ...');
@@ -468,28 +488,34 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
             "start_date": "",
             "end_date": "",
             "page": 1,
-            "limit": 999
+            "limit": 99999
           }
         ];
+
         final response = await http
-            .post(Uri.parse('$_baseUrl/report/job-info'),
-                headers: {'Content-Type': 'application/json', 'license': 'mpj'},
-                body: jsonEncode(payload))
+            .post(
+              Uri.parse('$_baseUrl/report/job-info'),
+              headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+              body: jsonEncode(payload),
+            )
             .timeout(const Duration(seconds: 45));
 
-        if (response.statusCode != 200)
+        if (response.statusCode != 200) {
           throw Exception('API Error: ${response.statusCode}');
+        }
 
         final decoded = jsonDecode(utf8.decode(response.bodyBytes));
         List<dynamic> detailedData = [];
         if (decoded is List &&
             decoded.isNotEmpty &&
-            decoded[0]['status'] == 'success')
+            decoded[0]['status'] == 'success') {
           detailedData = decoded[0]['data'] ?? [];
-        else if (decoded is Map && decoded['status'] == 'success')
+        } else if (decoded is Map && decoded['status'] == 'success') {
           detailedData = decoded['data'] ?? [];
+        }
 
         if (detailedData.isEmpty) throw Exception('ไม่พบรายละเอียดในระบบ');
+
         rawBytes = await Lq310FormBuilder()
             .buildPrintBuffer(List<Map<String, dynamic>>.from(detailedData));
       } else {
@@ -502,10 +528,11 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           printerName: state.selectedPrinter!, rawTis620Bytes: rawBytes);
 
       state = state.copyWith(
-          isPrinting: false,
-          statusMessage:
-              '✅ ส่งคำสั่งพิมพ์ทั้ง ${itemsToPrint.length} ใบสำเร็จแล้ว!',
-          selectedKeys: const {});
+        isPrinting: false,
+        statusMessage:
+            '✅ ส่งคำสั่งพิมพ์ทั้ง ${itemsToPrint.length} ใบสำเร็จแล้ว!',
+        selectedKeys: const {},
+      );
     } catch (e) {
       state = state.copyWith(
           isPrinting: false, statusMessage: '❌ พิมพ์ล้มเหลว: $e');

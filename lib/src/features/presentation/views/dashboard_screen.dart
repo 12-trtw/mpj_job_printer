@@ -202,6 +202,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   color: const Color(0xFF2563EB),
                                   isSelected: state.currentMode == 'job',
                                   onTap: () {
+                                    if (state.currentMode == 'job') return;
                                     notifier.fetchJobs(
                                       mode: 'job',
                                       startDate: _startDateCtrl.text,
@@ -215,6 +216,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   color: const Color(0xFF10B981),
                                   isSelected: state.currentMode == 'fuel',
                                   onTap: () {
+                                    if (state.currentMode == 'fuel') return;
                                     notifier.fetchJobs(
                                       mode: 'fuel',
                                       startDate: _startDateCtrl.text,
@@ -315,7 +317,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               child: TextField(
                                 controller: _keywordCtrl,
                                 decoration: const InputDecoration(
-                                    labelText: 'ค้นหา (Job/ทะเบียน)...',
+                                    labelText: 'ค้นหาในตาราง (Real-time)...',
                                     isDense: true,
                                     border: OutlineInputBorder(),
                                     prefixIcon: Icon(Icons.search, size: 18)),
