@@ -145,15 +145,15 @@ class Lq310FuelOrderBuilder {
       lines.add('ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้');
 
       final sig1Left = _padRight('ลงชื่อ', 8) +
-          _padRight('...................', 28) +
+          _padRight('...................', 25) +
           'พนักงานขับรถ';
       final sig1Right = _padRight('ลงชื่อ', 8) +
-          _padRight('...................', 28) +
+          _padRight('...................', 25) +
           'ผู้สั่งเติม';
       lines.add('$sig1Left\t$sig1Right');
 
       final sig2Left = _padRight('ลงชื่อ', 8) +
-          _padRight('............................', 28) +
+          _padRight('...................', 25) +
           'พนักงานปั๊มน้ำมัน';
       final sig2Right = 'User ID : Admin      $printTime';
       lines.add('$sig2Left\t$sig2Right');
