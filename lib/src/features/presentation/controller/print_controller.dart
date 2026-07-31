@@ -10,6 +10,7 @@ class PrintDashboardState {
   final bool isLoading;
   final bool isPrinting;
   final String statusMessage;
+  final List<Map<String, dynamic>> allJobs;
   final List<Map<String, dynamic>> jobs;
   final Set<String> selectedKeys;
   final List<String> availablePrinters;
@@ -28,6 +29,7 @@ class PrintDashboardState {
     this.isLoading = false,
     this.isPrinting = false,
     this.statusMessage = '',
+    this.allJobs = const [], // [NEW]
     this.jobs = const [],
     this.selectedKeys = const {},
     this.availablePrinters = const [],
@@ -47,6 +49,7 @@ class PrintDashboardState {
     bool? isLoading,
     bool? isPrinting,
     String? statusMessage,
+    List<Map<String, dynamic>>? allJobs, // [NEW]
     List<Map<String, dynamic>>? jobs,
     Set<String>? selectedKeys,
     List<String>? availablePrinters,
@@ -65,6 +68,7 @@ class PrintDashboardState {
       isLoading: isLoading ?? this.isLoading,
       isPrinting: isPrinting ?? this.isPrinting,
       statusMessage: statusMessage ?? this.statusMessage,
+      allJobs: allJobs ?? this.allJobs, // [NEW]
       jobs: jobs ?? this.jobs,
       selectedKeys: selectedKeys ?? this.selectedKeys,
       availablePrinters: availablePrinters ?? this.availablePrinters,
@@ -110,6 +114,27 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       page: 1,
       limit: state.currentLimit,
     );
+  }
+
+  // [NEW] ฟังก์ชันสำหรับกรองข้อมูลในเครื่อง (Local Search)
+  void filterLocal(String keyword) {
+    final lowerKey = keyword.toLowerCase();
+
+    if (lowerKey.isEmpty) {
+      // ถ้าช่องค้นหาว่างเปล่า ให้โชว์ข้อมูลทั้งหมด
+      state = state.copyWith(jobs: state.allJobs, currentKeyword: keyword);
+      return;
+    }
+
+    // ค้นหาข้อความในทุกๆ Column ของข้อมูล
+    final filtered = state.allJobs.where((item) {
+      return item.values.any((val) {
+        if (val == null) return false;
+        return val.toString().toLowerCase().contains(lowerKey);
+      });
+    }).toList();
+
+    state = state.copyWith(jobs: filtered, currentKeyword: keyword);
   }
 
   void setPrinter(String? printerName) {
@@ -171,6 +196,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     state = state.copyWith(
       isLoading: true,
       statusMessage: '',
+      allJobs: [],
       jobs: [],
       selectedKeys: const {},
       currentMode: mode,
@@ -194,7 +220,8 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
                 "limit": limit,
                 "approve_status": "",
                 "cost_status": "",
-                "keyword": keyword
+                "keyword":
+                    keyword // ถ้ากดจากปุ่มกรองวันที่ ระบบจะส่งคีย์เวิร์ดมาหา API ด้วย
               }
             ]
           : [
@@ -238,11 +265,18 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
       state = state.copyWith(
         isLoading: false,
+        allJobs:
+            List<Map<String, dynamic>>.from(dataList), // เก็บเข้า allJobs ด้วย
         jobs: List<Map<String, dynamic>>.from(dataList),
         currentPage: page,
         totalPages: totalPages,
         totalItems: totalItems,
       );
+
+      // อัปเดตข้อมูลบนจอใหม่หากมีข้อความค้างอยู่ในช่องค้นหา
+      if (keyword.isNotEmpty) {
+        filterLocal(keyword);
+      }
     } catch (e) {
       state =
           state.copyWith(isLoading: false, statusMessage: '❌ ข้อผิดพลาด: $e');

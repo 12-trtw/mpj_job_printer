@@ -311,7 +311,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     border: OutlineInputBorder(),
                                     prefixIcon: Icon(Icons.search, size: 18)),
                                 style: const TextStyle(fontSize: 13),
-                                onSubmitted: (_) => _fetchData(notifier),
+                                onChanged: (val) => notifier.filterLocal(val),
+                                onSubmitted: (val) => notifier.filterLocal(val),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -320,16 +321,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   backgroundColor: Colors.blue.shade700,
                                   foregroundColor: Colors.white,
                                   fixedSize: const Size.fromHeight(35)),
-                              onPressed: state.isLoading
-                                  ? null
-                                  : () => _fetchData(notifier),
-                              icon: state.isLoading
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2, color: Colors.white))
-                                  : const Icon(Icons.search, size: 16),
+                              onPressed: () =>
+                                  notifier.filterLocal(_keywordCtrl.text),
+                              icon: const Icon(Icons.search, size: 16),
                               label: const Text('ค้นหา',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
