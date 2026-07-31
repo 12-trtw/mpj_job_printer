@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpj_job_printer/src/services/windows_printer_service.dart';
@@ -188,8 +189,9 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           )
           .timeout(const Duration(seconds: 15));
 
-      if (response.statusCode != 200)
+      if (response.statusCode != 200) {
         throw Exception('API Error: ${response.statusCode}');
+      }
 
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       List<dynamic> dataList = [];
@@ -259,8 +261,9 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           )
           .timeout(const Duration(seconds: 15));
 
-      if (response.statusCode != 200)
+      if (response.statusCode != 200) {
         throw Exception('API Error: HTTP ${response.statusCode}');
+      }
 
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       List<dynamic> data = [];
@@ -281,8 +284,9 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   }
 
   Future<List<Map<String, dynamic>>?> getBatchPrintPreviewData() async {
-    if (state.selectedKeys.isEmpty)
+    if (state.selectedKeys.isEmpty) {
       throw Exception('กรุณาเลือกรายการที่ต้องการพิมพ์');
+    }
 
     final itemsToPrint = state.jobs
         .asMap()
@@ -318,8 +322,9 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           )
           .timeout(const Duration(seconds: 30));
 
-      if (response.statusCode != 200)
+      if (response.statusCode != 200) {
         throw Exception('API Error: ${response.statusCode}');
+      }
 
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       List<dynamic> detailedData = [];
@@ -359,6 +364,102 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           isPrinting: false,
           statusMessage: '✅ ส่งคำสั่งพิมพ์เข้าเครื่องสำเร็จแล้ว!',
           selectedKeys: const {});
+    } catch (e) {
+      state = state.copyWith(
+          isPrinting: false, statusMessage: '❌ พิมพ์ล้มเหลว: $e');
+    }
+  }
+
+  // [NEW] ฟังก์ชันสั่งพิมพ์หลายรายการที่ขาดไป
+  Future<void> printSelectedJobs() async {
+    if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
+      state = state.copyWith(statusMessage: '❌ กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
+      return;
+    }
+    if (state.selectedKeys.isEmpty) {
+      state =
+          state.copyWith(statusMessage: '❌ กรุณาเลือกรายการที่ต้องการพิมพ์');
+      return;
+    }
+
+    state = state.copyWith(
+        isPrinting: true,
+        statusMessage: '⏳ กำลังเตรียมข้อมูลเพื่อสั่งพิมพ์แบบกลุ่ม...');
+
+    try {
+      final itemsToPrint = state.jobs
+          .asMap()
+          .entries
+          .where((e) {
+            final refId =
+                e.value['job_no'] ?? e.value['fleet_id'] ?? e.key.toString();
+            return state.selectedKeys.contains('${refId}_${e.key}');
+          })
+          .map((e) => e.value)
+          .toList();
+
+      Uint8List rawBytes;
+
+      if (state.currentMode == 'job') {
+        final List<String> jobNos = itemsToPrint
+            .map((e) => e['job_no']?.toString() ?? '')
+            .where((n) => n.isNotEmpty)
+            .toList();
+
+        state = state.copyWith(
+            statusMessage:
+                '⏳ กำลังดึงรายละเอียดงาน ${jobNos.length} รายการ...');
+
+        final payload = [
+          {
+            "job_no": jobNos,
+            "start_date": "",
+            "end_date": "",
+            "page": 1,
+            "limit": 999
+          }
+        ];
+        final response = await http
+            .post(
+              Uri.parse('http://tmsthai.com:9100/mpj-v1/report/job-info'),
+              headers: {'Content-Type': 'application/json', 'license': 'mpj'},
+              body: jsonEncode(payload),
+            )
+            .timeout(const Duration(seconds: 30));
+
+        if (response.statusCode != 200) {
+          throw Exception('API Error: ${response.statusCode}');
+        }
+
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        List<dynamic> detailedData = [];
+        if (decoded is List &&
+            decoded.isNotEmpty &&
+            decoded[0]['status'] == 'success') {
+          detailedData = decoded[0]['data'] ?? [];
+        } else if (decoded is Map && decoded['status'] == 'success') {
+          detailedData = decoded['data'] ?? [];
+        }
+
+        if (detailedData.isEmpty) throw Exception('ไม่พบรายละเอียดในระบบ');
+
+        rawBytes = await Lq310FormBuilder()
+            .buildPrintBuffer(List<Map<String, dynamic>>.from(detailedData));
+      } else {
+        rawBytes = await Lq310FuelOrderBuilder().buildPrintBuffer(itemsToPrint);
+      }
+
+      state =
+          state.copyWith(statusMessage: '⏳ กำลังส่งข้อมูลเข้าเครื่องพิมพ์...');
+      await _printerService.printRawData(
+          printerName: state.selectedPrinter!, rawTis620Bytes: rawBytes);
+
+      state = state.copyWith(
+        isPrinting: false,
+        statusMessage:
+            '✅ ส่งคำสั่งพิมพ์ทั้ง ${itemsToPrint.length} ใบสำเร็จแล้ว!',
+        selectedKeys: const {},
+      );
     } catch (e) {
       state = state.copyWith(
           isPrinting: false, statusMessage: '❌ พิมพ์ล้มเหลว: $e');
