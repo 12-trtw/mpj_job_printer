@@ -11,6 +11,7 @@ class Lq310FuelOrderBuilder {
   static const String escThai3Pass = '\x1C\x70\x03';
   static const String font10Cpi = '\x1B\x50';
   static const String font15Cpi = '\x1B\x67';
+  static const String escLeftMargin0 = '\x1B\x6C\x00';
 
   String _toThaiText(double? numVal) {
     if (numVal == null || numVal == 0) return 'ศูนย์';
@@ -65,7 +66,7 @@ class Lq310FuelOrderBuilder {
 
     for (final item in printData) {
       String formContent =
-          '$escInit$escPageLen$escCancelSkip$font15Cpi$escThaiTis620$escThai3Pass$escSetTab';
+          '$escInit$escLeftMargin0$escPageLen$escCancelSkip$font15Cpi$escThaiTis620$escThai3Pass$escSetTab';
 
       final fleetId = item['fleet_id']?.toString() ?? '';
 
@@ -100,10 +101,10 @@ class Lq310FuelOrderBuilder {
 
       lines.add('');
       lines.add(
-          '$font10Cpi           MPJ Logistics Public Company Limited$font15Cpi');
+          '$font10Cpi          MPJ Logistics Public Company Limited$font15Cpi');
       lines.add('');
       lines.add(
-          '                                      [ ใบสั่งเติมน้ำมัน ]\t.         เลขที่ใบสั่งเติม $fleetId');
+          '                                 [ ใบสั่งเติมน้ำมัน ]\t.         เลขที่ใบสั่งเติม $fleetId');
       lines.add('-' * 112);
       lines.add('');
 
