@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpj_job_printer/src/features/presentation/controller/auth_controller.dart';
@@ -13,6 +14,16 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _usernameCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+
+  Timer? _secretTimer;
+
+  @override
+  void dispose() {
+    _secretTimer?.cancel();
+    _usernameCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose();
+  }
 
   void _handleLogin() async {
     if (_usernameCtrl.text.isEmpty || _passwordCtrl.text.isEmpty) {
@@ -44,92 +55,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  void _startSecretTimer() {
+    _secretTimer = Timer(const Duration(seconds: 7), () {
+      final authState = ref.read(authProvider);
+      final newMode = !authState.isDemoMode;
+      ref.read(authProvider.notifier).setEnvironment(newMode);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              newMode ? '🛠️ เปิดใช้งานโหมด DEMO' : '✅ กลับสู่โหมด PRODUCTION'),
+          backgroundColor: newMode ? Colors.red : Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
+  }
+
+  void _cancelSecretTimer() {
+    _secretTimer?.cancel();
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final authNotifier = ref.read(authProvider.notifier);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       body: Stack(
         children: [
-          Positioned(
-            top: 20,
-            right: 20,
-            child: Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: authState.isDemoMode
-                        ? Colors.red.shade600
-                        : Colors.green.shade600,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    authState.isDemoMode ? 'DEMO MODE' : 'PRODUCTION',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12),
-                  ),
+          if (authState.isDemoMode)
+            Positioned(
+              top: 20,
+              right: 20,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade600,
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                const SizedBox(width: 8),
-                PopupMenuButton<bool>(
-                  icon: const Icon(Icons.settings, color: Colors.grey),
-                  tooltip: 'ตั้งค่า',
-                  offset: const Offset(0, 40),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  onSelected: (bool isDemo) {
-                    authNotifier.setEnvironment(isDemo);
-                  },
-                  itemBuilder: (BuildContext context) => [
-                    PopupMenuItem<bool>(
-                      value: false,
-                      child: Row(
-                        children: [
-                          Icon(Icons.rocket_launch,
-                              color: !authState.isDemoMode
-                                  ? Colors.green
-                                  : Colors.grey,
-                              size: 20),
-                          const SizedBox(width: 12),
-                          Text('Production',
-                              style: TextStyle(
-                                  fontWeight: !authState.isDemoMode
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  fontSize: 14)),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem<bool>(
-                      value: true,
-                      child: Row(
-                        children: [
-                          Icon(Icons.bug_report,
-                              color: authState.isDemoMode
-                                  ? Colors.red
-                                  : Colors.grey,
-                              size: 20),
-                          const SizedBox(width: 12),
-                          Text('Demo',
-                              style: TextStyle(
-                                  fontWeight: authState.isDemoMode
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  fontSize: 14)),
-                        ],
-                      ),
-                    ),
-                  ],
+                child: const Text(
+                  'DEMO MODE',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12),
                 ),
-              ],
+              ),
             ),
-          ),
           Center(
             child: Container(
               width: 400,
@@ -145,8 +118,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.local_shipping,
-                      size: 60, color: Color(0xFFF97316)),
+                  GestureDetector(
+                    onTapDown: (_) => _startSecretTimer(),
+                    onTapUp: (_) => _cancelSecretTimer(),
+                    onTapCancel: () => _cancelSecretTimer(),
+                    child: const Icon(Icons.local_shipping,
+                        size: 60, color: Color(0xFFF97316)),
+                  ),
                   const SizedBox(height: 16),
                   const Text('MPJ Print Management',
                       style:

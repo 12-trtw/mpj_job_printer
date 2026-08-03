@@ -174,11 +174,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Container(
-                    width: 1, height: 24, color: Colors.white.withOpacity(0.5)),
-                const SizedBox(width: 16),
-                if (state.isDemoMode)
+                if (state.isDemoMode) ...[
+                  const SizedBox(width: 16),
+                  Container(
+                      width: 1,
+                      height: 24,
+                      color: Colors.white.withOpacity(0.5)),
+                  const SizedBox(width: 16),
                   Container(
                     margin: const EdgeInsets.only(right: 16),
                     padding:
@@ -193,56 +195,57 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             fontWeight: FontWeight.bold,
                             fontSize: 13)),
                   ),
-                PopupMenuButton<bool>(
-                  icon: const Icon(Icons.settings, color: Colors.white),
-                  tooltip: 'ตั้งค่าระบบ (Environment)',
-                  offset: const Offset(0, 45),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  onSelected: (bool isDemo) {
-                    notifier.setEnvironment(isDemo);
-                  },
-                  itemBuilder: (BuildContext context) => [
-                    PopupMenuItem<bool>(
-                      value: false,
-                      child: Row(
-                        children: [
-                          Icon(Icons.rocket_launch,
-                              color: !state.isDemoMode
-                                  ? Colors.green
-                                  : Colors.grey,
-                              size: 20),
-                          const SizedBox(width: 12),
-                          Text('Production',
-                              style: TextStyle(
-                                  fontWeight: !state.isDemoMode
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  fontSize: 16)),
-                        ],
+                  PopupMenuButton<bool>(
+                    icon: const Icon(Icons.settings, color: Colors.white),
+                    tooltip: 'ตั้งค่าระบบ (Environment)',
+                    offset: const Offset(0, 45),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    onSelected: (bool isDemo) {
+                      notifier.setEnvironment(isDemo);
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      PopupMenuItem<bool>(
+                        value: false,
+                        child: Row(
+                          children: [
+                            Icon(Icons.rocket_launch,
+                                color: !state.isDemoMode
+                                    ? Colors.green
+                                    : Colors.grey,
+                                size: 20),
+                            const SizedBox(width: 12),
+                            Text('Production',
+                                style: TextStyle(
+                                    fontWeight: !state.isDemoMode
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    fontSize: 16)),
+                          ],
+                        ),
                       ),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem<bool>(
-                      value: true,
-                      child: Row(
-                        children: [
-                          Icon(Icons.bug_report,
-                              color:
-                                  state.isDemoMode ? Colors.red : Colors.grey,
-                              size: 20),
-                          const SizedBox(width: 12),
-                          Text('Demo',
-                              style: TextStyle(
-                                  fontWeight: state.isDemoMode
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  fontSize: 16)),
-                        ],
+                      const PopupMenuDivider(),
+                      PopupMenuItem<bool>(
+                        value: true,
+                        child: Row(
+                          children: [
+                            Icon(Icons.bug_report,
+                                color:
+                                    state.isDemoMode ? Colors.red : Colors.grey,
+                                size: 20),
+                            const SizedBox(width: 12),
+                            Text('Demo',
+                                style: TextStyle(
+                                    fontWeight: state.isDemoMode
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    fontSize: 16)),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
                 const SizedBox(width: 8),
               ],
             ),
