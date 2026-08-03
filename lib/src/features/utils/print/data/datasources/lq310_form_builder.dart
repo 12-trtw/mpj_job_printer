@@ -119,8 +119,10 @@ class Lq310FormBuilder {
         PrintItem(containerNo, 20),
         PrintItem(seal, 73)
       ]);
-      formLines[10] = ThaiPrintUtils.buildLine(
-          [PrintItem(drop2, 23), PrintItem(drop3, 54)]);
+      if (drop3.trim().isNotEmpty) {
+        formLines[10] = ThaiPrintUtils.buildLine(
+            [PrintItem(drop2, 23), PrintItem(drop3, 54)]);
+      }
       formLines[12] = ThaiPrintUtils.buildLine(
           [PrintItem(jobEndDate, 18), PrintItem(jobEndTime, 50)]);
       formLines[14] = ThaiPrintUtils.buildLine([
