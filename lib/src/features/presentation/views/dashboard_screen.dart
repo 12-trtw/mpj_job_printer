@@ -197,7 +197,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                   PopupMenuButton<bool>(
                     icon: const Icon(Icons.settings, color: Colors.white),
-                    tooltip: 'ตั้งค่าระบบ (Environment)',
+                    tooltip: 'ตั้งค่า',
                     offset: const Offset(0, 45),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
