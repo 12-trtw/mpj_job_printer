@@ -352,7 +352,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     if (state.selectedKeys.isEmpty)
       throw Exception('กรุณาเลือกรายการที่ต้องการพิมพ์');
 
-    // ดึงข้อมูลทั้งหมดที่ผู้ใช้ติ๊ก Checkbox ไว้จากเครื่องเลย
     final itemsToPrint = state.allJobs.where((item) {
       final refId = item['job_no']?.toString() ??
           item['order_number']?.toString() ??

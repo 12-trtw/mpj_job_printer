@@ -626,7 +626,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _showPreviewAndPrint(
       String? refId, PrintDashboardNotifier notifier) async {
-    final currentUsername = ref.read(authProvider).username ?? '';
     if (refId == null || refId.isEmpty) return;
     final state = ref.read(dashboardProvider);
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
@@ -701,6 +700,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         foregroundColor: Colors.white),
                     onPressed: () {
                       Navigator.pop(ctx);
+                      final currentUsername =
+                          ref.read(authProvider).username ?? '';
                       notifier.executePrint(state.currentMode, previewData,
                           username: currentUsername);
                     },
