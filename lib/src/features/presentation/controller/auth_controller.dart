@@ -52,7 +52,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final response = await http
           .post(
             Uri.parse('$_baseUrl/auth/employee/login'),
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              'auth':
+                  'd7b2b7793038644a54392c1f1113128ef0dd0504b806d8eec2fc8e17c3e78920',
+              'license': 'mpj'
+            },
             body: jsonEncode([
               {"username": username, "password": password}
             ]),
