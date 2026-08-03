@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpj_job_printer/src/features/presentation/controller/auth_controller.dart';
+import 'package:mpj_job_printer/src/features/presentation/controller/print_controller.dart'; // 👈 นำเข้า print_controller
 import 'dashboard_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -42,6 +43,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (success) {
       if (!mounted) return;
+      final isDemo = ref.read(authProvider).isDemoMode;
+      ref
+          .read(dashboardProvider.notifier)
+          .setEnvironment(isDemo, doFetch: false);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const DashboardScreen()),

@@ -99,7 +99,7 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       ? 'http://tmsthai.com:9100/mpj-v1' //DEMO
       : 'https://tms.mpjdc.com:7049/mpj-v1'; //Production
 
-  void setEnvironment(bool isDemo) {
+  void setEnvironment(bool isDemo, {bool doFetch = true}) {
     if (state.isDemoMode == isDemo) return;
     state = state.copyWith(
         isDemoMode: isDemo,
@@ -107,11 +107,13 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
             ? 'เปลี่ยนเป็นโหมด Demo แล้ว'
             : 'เปลี่ยนเป็นโหมด Production แล้ว');
 
-    fetchJobs(
-      mode: state.currentMode,
-      startDate: state.currentStartDate,
-      endDate: state.currentEndDate,
-    );
+    if (doFetch) {
+      fetchJobs(
+        mode: state.currentMode,
+        startDate: state.currentStartDate,
+        endDate: state.currentEndDate,
+      );
+    }
   }
 
   void setPrinter(String? printerName) {
