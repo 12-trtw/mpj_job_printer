@@ -91,10 +91,10 @@ class Lq310FormBuilder {
 
       final jobEndDate = _formatThaiDate(actualJobEnd);
       final jobEndTime = _formatTime(actualJobEnd);
-
+      final consignee = item['consignee_name']?.toString() ?? '';
       final customer = item['customer_name']?.toString() ?? '';
       final bookingNo = item['booking_no']?.toString() ?? '';
-
+      final agent = item['agent']?.toString() ?? '';
       final size = item['container_size']?.toString() ?? '';
       final containerNo = item['container_no']?.toString() ?? '';
       final seal = item['seal_desc']?.toString() ?? '';
@@ -111,7 +111,9 @@ class Lq310FormBuilder {
       formLines[0] = ThaiPrintUtils.buildLine([PrintItem(jobNo, 67)]);
       formLines[3] = ThaiPrintUtils.buildLine([PrintItem(jobStartStr, 4)]);
       formLines[4] = ThaiPrintUtils.buildLine([PrintItem(customer, 8)]);
-      formLines[6] = ThaiPrintUtils.buildLine([PrintItem(bookingNo, 52)]);
+      formLines[5] = ThaiPrintUtils.buildLine([PrintItem(agent, 8)]);
+      formLines[6] = ThaiPrintUtils.buildLine(
+          [PrintItem(consignee, 8), PrintItem(bookingNo, 52)]);
       formLines[8] = ThaiPrintUtils.buildLine(
           [PrintItem(drop1, 23), PrintItem(drop2, 54)]);
       formLines[9] = ThaiPrintUtils.buildLine([
