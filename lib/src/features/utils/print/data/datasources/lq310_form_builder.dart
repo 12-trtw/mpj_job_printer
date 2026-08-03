@@ -102,7 +102,7 @@ class Lq310FormBuilder {
       final drop1 = item['drop1']?.toString() ?? '';
       final drop2 = item['drop2']?.toString() ?? '';
       final drop3 = item['drop3']?.toString() ?? '';
-      final drop4 = item['drop4']?.toString() ?? '';
+      // final drop4 = item['drop4']?.toString() ?? '';
 
       final driver = item['driver']?.toString() ?? '';
       final carNo = item['vehicle_name']?.toString() ?? '';
@@ -120,7 +120,7 @@ class Lq310FormBuilder {
         PrintItem(seal, 73)
       ]);
       formLines[10] = ThaiPrintUtils.buildLine(
-          [PrintItem(drop3, 23), PrintItem(drop4, 54)]);
+          [PrintItem(drop2, 23), PrintItem(drop3, 54)]);
       formLines[12] = ThaiPrintUtils.buildLine(
           [PrintItem(jobEndDate, 18), PrintItem(jobEndTime, 50)]);
       formLines[14] = ThaiPrintUtils.buildLine([
