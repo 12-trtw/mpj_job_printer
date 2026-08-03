@@ -71,7 +71,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
             decoded.isNotEmpty &&
             decoded[0]['status'] == 'success') {
           final data = decoded[0]['data'][0];
-          final loggedInUser = data['user_name']?.toString();
+          final loggedInUser = data['user_name']?.toString() ?? username;
+
           final fName = data['user_fname']?.toString() ?? '';
           final lName = data['user_lname']?.toString() ?? '';
 

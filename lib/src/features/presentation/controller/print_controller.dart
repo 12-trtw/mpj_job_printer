@@ -308,7 +308,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
         dataList = decoded[0]['data'] ?? [];
       }
 
-      // เรียงข้อมูล (Sort)
       List<Map<String, dynamic>> sortedList =
           List<Map<String, dynamic>>.from(dataList);
       sortedList.sort((a, b) {
@@ -332,7 +331,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   Future<List<Map<String, dynamic>>?> getPrintPreviewData(
       String mode, String refId) async {
     try {
-      // ดึงข้อมูลพรีวิวจากตาราง AllJobs ได้เลย ไม่ต้องยิง API แล้ว
       final found = state.allJobs.where((e) {
         final currentId = e['job_no']?.toString() ??
             e['order_number']?.toString() ??
