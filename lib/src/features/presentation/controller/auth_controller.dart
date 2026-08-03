@@ -71,8 +71,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
             decoded.isNotEmpty &&
             decoded[0]['status'] == 'success') {
           final data = decoded[0]['data'][0];
-
-          // ใช้ user_name ตาม API ล่าสุด (ถ้าไม่มีให้ใช้ username ที่พิมพ์เข้ามาเลย)
           final loggedInUser = data['user_name']?.toString() ?? username;
 
           final fName = data['user_fname']?.toString() ?? '';
