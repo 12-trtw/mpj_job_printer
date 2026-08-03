@@ -274,20 +274,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             Row(
                               children: [
                                 _buildModeButton(
-                                  title: '📋 รายการ JOB',
-                                  color: const Color(0xFF2563EB),
-                                  isSelected: state.currentMode == 'job',
-                                  onTap: () {
-                                    if (state.currentMode == 'job') return;
-                                    notifier.fetchJobs(
-                                      mode: 'job',
-                                      startDate: _startDateCtrl.text,
-                                      endDate: _endDateCtrl.text,
-                                    );
-                                  },
-                                ),
-                                const SizedBox(width: 12),
-                                _buildModeButton(
                                   title: '📋 รายการ ORDER',
                                   color: const Color(0xFF8B5CF6),
                                   isSelected: state.currentMode == 'order',
@@ -295,6 +281,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     if (state.currentMode == 'order') return;
                                     notifier.fetchJobs(
                                       mode: 'order',
+                                      startDate: _startDateCtrl.text,
+                                      endDate: _endDateCtrl.text,
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 12),
+                                _buildModeButton(
+                                  title: '📋 รายการ JOB',
+                                  color: const Color(0xFF2563EB),
+                                  isSelected: state.currentMode == 'job',
+                                  onTap: () {
+                                    if (state.currentMode == 'job') return;
+                                    notifier.fetchJobs(
+                                      mode: 'job',
                                       startDate: _startDateCtrl.text,
                                       endDate: _endDateCtrl.text,
                                     );
