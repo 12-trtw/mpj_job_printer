@@ -96,8 +96,8 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
   }
 
   String get _baseUrl => state.isDemoMode
-      ? 'http://tmsthai.com:9100/mpj-v1'
-      : 'https://tms.mpjdc.com:7049/mpj-v1';
+      ? 'http://tmsthai.com:9100/mpj-v1' //DEMO
+      : 'https://tms.mpjdc.com:7049/mpj-v1'; //Production
 
   void setEnvironment(bool isDemo) {
     if (state.isDemoMode == isDemo) return;
@@ -365,8 +365,8 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     return itemsToPrint;
   }
 
-  Future<void> executePrint(
-      String mode, List<Map<String, dynamic>> dataToPrint) async {
+  Future<void> executePrint(String mode, List<Map<String, dynamic>> dataToPrint,
+      {String username = ''}) async {
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
       state = state.copyWith(statusMessage: '❌ กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
       return;
@@ -377,7 +377,9 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
     try {
       final rawBytes = (mode == 'job' || mode == 'order')
           ? await Lq310FormBuilder().buildPrintBuffer(dataToPrint)
-          : await Lq310FuelOrderBuilder().buildPrintBuffer(dataToPrint);
+          : await Lq310FuelOrderBuilder()
+              .buildPrintBuffer(dataToPrint, printByUsername: username);
+
       await _printerService.printRawData(
           printerName: state.selectedPrinter!, rawTis620Bytes: rawBytes);
 

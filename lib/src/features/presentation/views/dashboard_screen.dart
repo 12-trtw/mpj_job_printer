@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:mpj_job_printer/src/features/presentation/controller/auth_controller.dart';
 import 'package:mpj_job_printer/src/features/presentation/controller/print_controller.dart';
+import 'login_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -88,6 +90,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final state = ref.watch(dashboardProvider);
     final notifier = ref.read(dashboardProvider.notifier);
 
+    final authState = ref.watch(authProvider);
+    final displayName =
+        (authState.driverName != null && authState.driverName!.isNotEmpty)
+            ? authState.driverName!
+            : (authState.username ?? 'ผู้ใช้งานระบบ');
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       body: Column(
@@ -107,6 +115,69 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
                 const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.account_circle,
+                          color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Tooltip(
+                  message: 'ออกจากระบบ',
+                  child: InkWell(
+                    onTap: () {
+                      ref.read(authProvider.notifier).logout();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginScreen()),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade600,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.5), width: 1),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.logout, color: Colors.white, size: 16),
+                          SizedBox(width: 6),
+                          Text(
+                            'Logout',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                    width: 1, height: 24, color: Colors.white.withOpacity(0.5)),
+                const SizedBox(width: 16),
                 if (state.isDemoMode)
                   Container(
                     margin: const EdgeInsets.only(right: 16),
@@ -385,7 +456,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   controller: _horizontalScrollController,
                                   scrollDirection: Axis.horizontal,
                                   child: SizedBox(
-                                    // ปรับความกว้างของโหมด Order ให้สั้นลง เพราะลบคอลัมน์ออกไปเยอะ
                                     width: state.currentMode == 'job'
                                         ? 2500
                                         : (state.currentMode == 'order'
@@ -556,6 +626,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _showPreviewAndPrint(
       String? refId, PrintDashboardNotifier notifier) async {
+    final currentUsername = ref.read(authProvider).username ?? '';
     if (refId == null || refId.isEmpty) return;
     final state = ref.read(dashboardProvider);
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
@@ -630,7 +701,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         foregroundColor: Colors.white),
                     onPressed: () {
                       Navigator.pop(ctx);
-                      notifier.executePrint(state.currentMode, previewData);
+                      notifier.executePrint(state.currentMode, previewData,
+                          username: currentUsername);
                     },
                     icon: const Icon(Icons.print, size: 18),
                     label: const Text('ยืนยันสั่งพิมพ์'),
@@ -646,6 +718,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _showBatchPreviewAndPrint(PrintDashboardNotifier notifier) async {
+    final currentUsername = ref.read(authProvider).username ?? '';
     final state = ref.read(dashboardProvider);
     if (state.selectedPrinter == null || state.selectedPrinter!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -747,7 +820,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         foregroundColor: Colors.white),
                     onPressed: () {
                       Navigator.pop(ctx);
-                      notifier.executePrint(state.currentMode, previewData);
+                      notifier.executePrint(state.currentMode, previewData,
+                          username: currentUsername);
                     },
                     icon: const Icon(Icons.print, size: 18),
                     label: const Text('ยืนยันสั่งพิมพ์ทั้งหมด',
@@ -875,15 +949,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     activeColor: const Color(0xFFF97316))),
             _hCell(60, 'Print', align: Alignment.center),
             _hCell(130, 'Order No'),
-            // ตัด Job no ทิ้งไป
-            // ตัด order_start_date, order_end_date ทิ้งไป
             _hCell(150, 'Job Type'),
             _hCell(120, 'Vessel'),
             _hCell(120, 'Booking BL'),
             _hCell(110, 'Contrainer Size'),
             _hCell(120, 'Contrainer No'),
             _hCell(100, 'Seal No'),
-            // ตัด Plate, Driver, Trailer ทิ้งไป
             _hCell(200, 'customer'),
             _hCell(150, 'Consignee'),
             _hCell(120, 'Route'),
@@ -922,7 +993,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
-  // 📋 แท็บรายการ JOB
   Widget _buildJobInfoRow(
       BuildContext context,
       Map<String, dynamic> item,
@@ -978,7 +1048,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  // 📋 แท็บรายการ ORDER
   Widget _buildOrderRow(
       BuildContext context,
       Map<String, dynamic> item,
@@ -1011,7 +1080,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _actionCell(
               60, () => _showPreviewAndPrint(refId, notifier), isPrinted),
           _dCell(context, 130, item['order_number']),
-          // ตัด 6 คอลัมน์ที่ไม่ได้ใช้งานออก
           _dCell(context, 150, item['type_name'] ?? item['job_type_name']),
           _dCell(context, 120, item['vessel'] ?? '-'),
           _dCell(context, 120, item['booking_no'] ?? '-'),
@@ -1031,7 +1099,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  // ⛽ แท็บรายการเติมน้ำมัน
   Widget _buildFuelRow(
       BuildContext context,
       Map<String, dynamic> item,

@@ -28,26 +28,23 @@ class Lq310FuelOrderBuilder {
       'เก้า'
     ];
     final p = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน'];
-
     String str = numVal.floor().toString();
     String res = '';
-
     for (int i = 0; i < str.length; i++) {
       int n = int.parse(str[i]);
       int pos = str.length - 1 - i;
       if (n != 0) {
-        if (pos == 1 && n == 1) {
+        if (pos == 1 && n == 1)
           res += 'สิบ';
-        } else if (pos == 1 && n == 2) {
+        else if (pos == 1 && n == 2)
           res += 'ยี่สิบ';
-        } else if (pos == 0 &&
+        else if (pos == 0 &&
             n == 1 &&
             str.length > 1 &&
-            str[str.length - 2] != '0') {
+            str[str.length - 2] != '0')
           res += 'เอ็ด';
-        } else {
+        else
           res += d[n] + p[pos];
-        }
       }
     }
     return res;
@@ -59,17 +56,15 @@ class Lq310FuelOrderBuilder {
     return str + (' ' * (targetLength - dLen));
   }
 
-  Future<Uint8List> buildPrintBuffer(
-      List<Map<String, dynamic>> printData) async {
+  Future<Uint8List> buildPrintBuffer(List<Map<String, dynamic>> printData,
+      {String printByUsername = ''}) async {
     final String escSetTab = '\x1B\x44${String.fromCharCode(60)}\x00';
     final StringBuffer contentBuffer = StringBuffer();
 
     for (final item in printData) {
       String formContent =
           '$escInit$escLeftMargin0$escPageLen$escCancelSkip$font15Cpi$escThaiTis620$escThai3Pass$escSetTab';
-
       final fleetId = item['fleet_id']?.toString() ?? '';
-
       String dateStr = '....................';
       String printTime = '';
 
@@ -86,24 +81,19 @@ class Lq310FuelOrderBuilder {
           item['vehicle_name']?.toString() ?? '....................';
       final driver = item['driver']?.toString() ?? '....................';
       final fuelName = item['fuel_name']?.toString() ?? '....................';
-
       final double fuelQtyNum = item['fuel_qty'] != null
           ? double.tryParse(item['fuel_qty'].toString()) ?? 0.0
           : 0.0;
-
       final fuelQty =
           fuelQtyNum > 0 ? fuelQtyNum.toStringAsFixed(2) : '..........';
       final thaiText = fuelQtyNum > 0 ? _toThaiText(fuelQtyNum) : '';
-
       final jobNo = item['job_no']?.toString() ??
           item['order_number']?.toString() ??
           '....................';
-
       final mileage =
           item['start_mileage']?.toString() ?? '....................';
 
       final List<String> lines = [];
-
       lines.add('');
       lines.add(
           '$font10Cpi          MPJ Logistics Public Company Limited$font15Cpi');
@@ -141,7 +131,6 @@ class Lq310FuelOrderBuilder {
           _padRight('', 26) +
           ' )';
       lines.add(l5Left);
-
       lines.add('ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้');
 
       final sig1Left = _padRight('ลงชื่อ', 8) +
@@ -155,16 +144,17 @@ class Lq310FuelOrderBuilder {
       final sig2Left = _padRight('ลงชื่อ', 8) +
           _padRight('...................', 22) +
           'พนักงานปั๊มน้ำมัน';
-      final sig2Right = 'User ID : Admin      $printTime';
+
+      final displayUser = printByUsername.isEmpty ? '' : printByUsername;
+      final sig2Right = 'Username : ${_padRight(displayUser, 10)} $printTime';
       lines.add('$sig2Left\t$sig2Right');
 
-      final footerLeft = 'หมายเหตุ : $fleetId';
+      final footerLeft = 'หมายเหตุ : ...................';
       final footerRight = 'FM-OP-40, Rev01 (19-05-68)';
       lines.add('${_padRight(footerLeft, 55)}\t$footerRight');
 
       lines.add('');
       lines.add('');
-
       while (lines.length < 23) {
         lines.add('');
       }
@@ -175,9 +165,8 @@ class Lq310FuelOrderBuilder {
 
     final Uint8List? tis620Bytes =
         await CharsetConverter.encode('TIS620', contentBuffer.toString());
-    if (tis620Bytes == null) {
+    if (tis620Bytes == null)
       throw Exception('ไม่สามารถเข้ารหัสภาษาไทย TIS-620 ได้');
-    }
     return tis620Bytes;
   }
 }
