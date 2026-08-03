@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpj_job_printer/src/features/presentation/controller/auth_controller.dart';
-import 'package:mpj_job_printer/src/features/presentation/controller/print_controller.dart'; // 👈 นำเข้า print_controller
+import 'package:mpj_job_printer/src/features/presentation/controller/print_controller.dart';
 import 'dashboard_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
