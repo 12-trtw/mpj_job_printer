@@ -21,7 +21,7 @@ class AuthState {
     bool? isLoading,
     bool? isDemoMode,
     String? username,
-    String? driverName,
+    String? employeeName,
     String? error,
   }) {
     return AuthState(
@@ -81,7 +81,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           state = state.copyWith(
             isLoading: false,
             username: loggedInUser,
-            driverName: '$fName $lName'.trim(),
+            employeeName: '$fName $lName'.trim(),
           );
           return true;
         } else {
