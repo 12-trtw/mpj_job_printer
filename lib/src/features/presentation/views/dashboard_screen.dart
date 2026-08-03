@@ -921,6 +921,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             _hCell(120, 'Job End'),
             _hCell(150, 'Job Type'),
             _hCell(150, 'Customer'),
+            _hCell(150, 'Consinee'),
             _hCell(100, 'Agent'),
             _hCell(120, 'Booking No'),
             _hCell(80, 'Cont. Size'),
@@ -934,7 +935,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             _hCell(100, 'Drop 1'),
             _hCell(100, 'Drop 2'),
             _hCell(100, 'Drop 3'),
-            _hCell(100, 'Drop 4'),
           ],
         ),
       );
@@ -1034,6 +1034,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _dCell(context, 120, _formatDateTime(item['job_end'])),
           _dCell(context, 150, item['type_name']),
           _dCell(context, 150, item['customer_name']),
+          _dCell(context, 150, item['consignee_name'] ?? '-'),
           _dCell(context, 100, item['agent']),
           _dCell(context, 120, item['booking_no']),
           _dCell(context, 80, item['container_size']),
@@ -1047,7 +1048,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _dCell(context, 100, item['drop1']),
           _dCell(context, 100, item['drop2']),
           _dCell(context, 100, item['drop3']),
-          _dCell(context, 100, item['drop4']),
         ],
       ),
     );
