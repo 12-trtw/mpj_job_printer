@@ -92,8 +92,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     final authState = ref.watch(authProvider);
     final displayName =
-        (authState.driverName != null && authState.driverName!.isNotEmpty)
-            ? authState.driverName!
+        (authState.employeeName != null && authState.employeeName!.isNotEmpty)
+            ? authState.employeeName!
             : (authState.username ?? 'ผู้ใช้งานระบบ');
 
     return Scaffold(

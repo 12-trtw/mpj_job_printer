@@ -6,14 +6,14 @@ class AuthState {
   final bool isLoading;
   final bool isDemoMode;
   final String? username;
-  final String? driverName;
+  final String? employeeName;
   final String error;
 
   AuthState({
     this.isLoading = false,
     this.isDemoMode = false,
     this.username,
-    this.driverName,
+    this.employeeName,
     this.error = '',
   });
 
@@ -28,7 +28,7 @@ class AuthState {
       isLoading: isLoading ?? this.isLoading,
       isDemoMode: isDemoMode ?? this.isDemoMode,
       username: username ?? this.username,
-      driverName: driverName ?? this.driverName,
+      employeeName: employeeName ?? this.employeeName,
       error: error ?? this.error,
     );
   }
@@ -71,6 +71,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
             decoded.isNotEmpty &&
             decoded[0]['status'] == 'success') {
           final data = decoded[0]['data'][0];
+
+          // ใช้ user_name ตาม API ล่าสุด (ถ้าไม่มีให้ใช้ username ที่พิมพ์เข้ามาเลย)
           final loggedInUser = data['user_name']?.toString() ?? username;
 
           final fName = data['user_fname']?.toString() ?? '';
