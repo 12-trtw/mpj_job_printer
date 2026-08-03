@@ -111,7 +111,7 @@ class Lq310FormBuilder {
       formLines[0] = ThaiPrintUtils.buildLine([PrintItem(jobNo, 67)]);
       formLines[3] = ThaiPrintUtils.buildLine([PrintItem(jobStartStr, 4)]);
       formLines[4] = ThaiPrintUtils.buildLine([PrintItem(customer, 8)]);
-      formLines[5] = ThaiPrintUtils.buildLine([PrintItem(agent, 8)]);
+      formLines[5] = ThaiPrintUtils.buildLine([PrintItem(agent, 4)]);
       formLines[6] = ThaiPrintUtils.buildLine(
           [PrintItem(consignee, 8), PrintItem(bookingNo, 52)]);
       formLines[8] = ThaiPrintUtils.buildLine(
