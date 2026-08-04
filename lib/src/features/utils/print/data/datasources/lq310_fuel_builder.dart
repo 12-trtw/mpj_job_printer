@@ -68,8 +68,6 @@ class Lq310FuelOrderBuilder {
     final String escSetTab = '\x1B\x44${String.fromCharCode(50)}\x00';
     final StringBuffer contentBuffer = StringBuffer();
 
-    final String indent = '        ';
-
     for (final item in printData) {
       String formContent =
           '$escInit$escLeftMargin0$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThai3Pass$escSetTab';
@@ -144,29 +142,28 @@ class Lq310FuelOrderBuilder {
 
       final sig2Right = 'Username: ${_padRight(displayUser, 8)} $printTime';
 
-      final footerLeft = 'หมายเหตุ : ...................';
-      final footerRight = 'FM-OP-40, Rev01 (19-05-68)';
+      const footerLeft = 'หมายเหตุ : ...................';
+      const footerRight = 'FM-OP-40, Rev01 (19-05-68)';
 
-      formLines[1] = indent +
+      formLines[1] =
           '             $font10Cpi MPJ Logistics Public Company Limited$font12Cpi';
-      formLines[3] = indent +
+      formLines[3] =
           '                         [ ใบสั่งเติมน้ำมัน ]\tเลขที่ใบสั่งเติม $fleetId';
-      formLines[4] = indent + ('-' * 80);
+      formLines[4] = '-' * 80;
 
-      formLines[6] = indent + '$l1Left\t$l1Right';
-      formLines[7] = indent + '$l2Left\t$l2Right';
-      formLines[8] = indent + '$l3Left\t$l3Right';
-      formLines[9] = indent + '$l4Left\t$l4Right';
+      formLines[6] = '$l1Left\t$l1Right';
+      formLines[7] = '$l2Left\t$l2Right';
+      formLines[8] = '$l3Left\t$l3Right';
+      formLines[9] = '$l4Left\t$l4Right';
 
-      formLines[11] = indent + l5Left;
+      formLines[11] = l5Left;
 
-      formLines[13] =
-          indent + 'ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้';
+      formLines[13] = 'ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้';
 
-      formLines[15] = indent + '$sig1Left\t$sig1Right';
-      formLines[17] = indent + '$sig2Left\t$sig2Right';
+      formLines[15] = '$sig1Left\t$sig1Right';
+      formLines[17] = '$sig2Left\t$sig2Right';
 
-      formLines[19] = indent + '${_padRight(footerLeft, 45)}\t$footerRight';
+      formLines[19] = '${_padRight(footerLeft, 45)}\t$footerRight';
 
       for (int i = 0; i <= 22; i++) {
         formContent += formLines[i] + '\r\n';
