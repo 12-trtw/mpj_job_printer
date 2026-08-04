@@ -9,8 +9,12 @@ class Lq310FuelOrderBuilder {
   static const String escCancelSkip = '\x1B\x4F';
   static const String escThaiTis620 = '\x1B\x74\x15';
   static const String escThai3Pass = '\x1C\x70\x03';
+
+  // กำหนดขนาด Font
   static const String font10Cpi = '\x1B\x50';
+  static const String font12Cpi = '\x1B\x4D';
   static const String font15Cpi = '\x1B\x67';
+
   static const String escLeftMargin0 = '\x1B\x6C\x00';
 
   String _toThaiText(double? numVal) {
@@ -58,12 +62,13 @@ class Lq310FuelOrderBuilder {
 
   Future<Uint8List> buildPrintBuffer(List<Map<String, dynamic>> printData,
       {String printByUsername = ''}) async {
-    final String escSetTab = '\x1B\x44${String.fromCharCode(60)}\x00';
+    final String escSetTab = '\x1B\x44${String.fromCharCode(55)}\x00';
     final StringBuffer contentBuffer = StringBuffer();
 
     for (final item in printData) {
       String formContent =
-          '$escInit$escLeftMargin0$escPageLen$escCancelSkip$font15Cpi$escThaiTis620$escThai3Pass$escSetTab';
+          '$escInit$escLeftMargin0$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThai3Pass$escSetTab';
+
       final fleetId = item['fleet_id']?.toString() ?? '';
       String dateStr = '....................';
       String printTime = '';
@@ -96,62 +101,63 @@ class Lq310FuelOrderBuilder {
       final List<String> lines = [];
       lines.add('');
       lines.add(
-          '$font10Cpi          MPJ Logistics Public Company Limited$font15Cpi');
+          '$font10Cpi       MPJ Logistics Public Company Limited$font12Cpi');
       lines.add('');
       lines.add(
-          '                                 [ ใบสั่งเติมน้ำมัน ]\t.         เลขที่ใบสั่งเติม $fleetId');
-      lines.add('-' * 105);
+          '                        [ ใบสั่งเติมน้ำมัน ]\t.        เลขที่ใบสั่งเติม $fleetId');
+
+      lines.add('-' * 80);
       lines.add('');
 
-      final l1Left = _padRight('ชื่อปั๊มที่เติม', 20) +
-          _padRight('........................', 35);
-      final l1Right = _padRight('วันที่', 12) + dateStr;
+      final l1Left = _padRight('ชื่อปั๊มที่เติม', 18) +
+          _padRight('......................', 30);
+      final l1Right = _padRight('วันที่', 10) + dateStr;
       lines.add('$l1Left\t$l1Right');
 
-      final vName = vehicle.length > 34 ? vehicle.substring(0, 34) : vehicle;
-      final l2Left = _padRight('ทะเบียนรถที่เติม', 20) + _padRight(vName, 35);
-      final l2Right = _padRight('ชื่อ พขร.', 12) + driver;
+      final vName = vehicle.length > 30 ? vehicle.substring(0, 30) : vehicle;
+      final l2Left = _padRight('ทะเบียนรถที่เติม', 18) + _padRight(vName, 30);
+      final l2Right = _padRight('ชื่อ พขร.', 10) + driver;
       lines.add('$l2Left\t$l2Right');
 
-      final l3Left = _padRight('ชนิดเชื้อเพลิง', 20) + _padRight(fuelName, 35);
-      final l3Right = _padRight('เลขไมล์', 12) + mileage;
+      final l3Left = _padRight('ชนิดเชื้อเพลิง', 18) + _padRight(fuelName, 30);
+      final l3Right = _padRight('เลขไมล์', 10) + mileage;
       lines.add('$l3Left\t$l3Right');
 
-      final l4Left = _padRight('ปริมาณ (ลิตร/กก.)', 20) +
-          _padRight(fuelQty, 11) +
+      final l4Left = _padRight('ปริมาณ (ลิตร/กก.)', 18) +
+          _padRight(fuelQty, 10) +
           '( ' +
-          _padRight(thaiText, 26) +
+          _padRight(thaiText, 20) +
           ' )';
-      final l4Right = _padRight('Job no. :', 12) + jobNo;
+      final l4Right = _padRight('Job no. :', 10) + jobNo;
       lines.add('$l4Left\t$l4Right');
 
-      final l5Left = _padRight('จำนวนเงิน (บาท)', 20) +
-          _padRight('', 11) +
+      final l5Left = _padRight('จำนวนเงิน (บาท)', 18) +
+          _padRight('', 10) +
           '( ' +
-          _padRight('', 26) +
+          _padRight('', 20) +
           ' )';
       lines.add(l5Left);
+
       lines.add('ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้');
 
-      final sig1Left = _padRight('ลงชื่อ', 8) +
-          _padRight('...................', 22) +
+      final sig1Left = _padRight('ลงชื่อ', 6) +
+          _padRight('..................', 20) +
           'พนักงานขับรถ';
-      final sig1Right = _padRight('ลงชื่อ', 8) +
-          _padRight('...................', 22) +
+      final sig1Right = _padRight('ลงชื่อ', 6) +
+          _padRight('..................', 20) +
           'ผู้สั่งเติม';
       lines.add('$sig1Left\t$sig1Right');
 
-      final sig2Left = _padRight('ลงชื่อ', 8) +
-          _padRight('...................', 22) +
+      final sig2Left = _padRight('ลงชื่อ', 6) +
+          _padRight('..................', 20) +
           'พนักงานปั๊มน้ำมัน';
-
       final displayUser = printByUsername.isEmpty ? '' : printByUsername;
-      final sig2Right = 'Username : ${_padRight(displayUser, 10)} $printTime';
+      final sig2Right = 'Username: ${_padRight(displayUser, 8)} $printTime';
       lines.add('$sig2Left\t$sig2Right');
 
       final footerLeft = 'หมายเหตุ : ...................';
       final footerRight = 'FM-OP-40, Rev01 (19-05-68)';
-      lines.add('${_padRight(footerLeft, 55)}\t$footerRight');
+      lines.add('${_padRight(footerLeft, 45)}\t$footerRight');
 
       lines.add('');
       lines.add('');
