@@ -65,7 +65,7 @@ class Lq310FuelOrderBuilder {
     await initializeDateFormatting('th_TH', null);
     await initializeDateFormatting('en_GB', null);
 
-    final String escSetTab = '\x1B\x44${String.fromCharCode(65)}\x00';
+    final String escSetTab = '\x1B\x44${String.fromCharCode(50)}\x00';
     final StringBuffer contentBuffer = StringBuffer();
 
     final String indent = '        ';
@@ -107,7 +107,7 @@ class Lq310FuelOrderBuilder {
       final List<String> lines = [];
       lines.add('');
       lines.add(indent +
-          '                  $font10Cpi MPJ Logistics Public Company Limited$font12Cpi');
+          '             $font10Cpi MPJ Logistics Public Company Limited$font12Cpi');
       lines.add('');
       lines.add(indent +
           '                         [ ใบสั่งเติมน้ำมัน ]\tเลขที่ใบสั่งเติม $fleetId');
@@ -119,18 +119,15 @@ class Lq310FuelOrderBuilder {
           _padRight('......................', 30);
       final l1Right = _padRight('วันที่', 10) + dateStr;
       lines.add(indent + '$l1Left\t$l1Right');
-      lines.add('');
 
       final vName = vehicle.length > 30 ? vehicle.substring(0, 30) : vehicle;
       final l2Left = _padRight('ทะเบียนรถที่เติม', 18) + _padRight(vName, 30);
       final l2Right = _padRight('ชื่อ พขร.', 10) + driver;
       lines.add(indent + '$l2Left\t$l2Right');
-      lines.add('');
 
       final l3Left = _padRight('ชนิดเชื้อเพลิง', 18) + _padRight(fuelName, 30);
       final l3Right = _padRight('เลขไมล์', 10) + mileage;
       lines.add(indent + '$l3Left\t$l3Right');
-      lines.add('');
 
       final l4Left = _padRight('ปริมาณ (ลิตร/กก.)', 18) +
           _padRight(fuelQty, 10) +
@@ -175,6 +172,9 @@ class Lq310FuelOrderBuilder {
       final footerRight = 'FM-OP-40, Rev01 (19-05-68)';
       lines.add(indent + '${_padRight(footerLeft, 45)}\t$footerRight');
 
+      lines.add('');
+      lines.add('');
+      lines.add('');
       lines.add('');
       lines.add('');
 
