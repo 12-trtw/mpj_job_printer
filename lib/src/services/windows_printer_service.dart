@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -47,17 +48,22 @@ class WindowsPrinterService {
     try {
       await tempFile.writeAsBytes(rawTis620Bytes);
 
-      final String networkPrinterPath = '\\\\localhost\\$printerName';
+      String targetPrinterPath;
+      if (printerName.startsWith(r'\\')) {
+        targetPrinterPath = printerName;
+      } else {
+        targetPrinterPath = '\\\\localhost\\$printerName';
+      }
 
       final ProcessResult printResult = await Process.run(
         'cmd.exe',
-        ['/c', 'copy', '/B', tempFilePath, networkPrinterPath],
+        ['/c', 'copy', '/B', tempFilePath, targetPrinterPath],
         runInShell: true,
       );
 
       if (printResult.exitCode != 0) {
         throw Exception(
-            'เกิดข้อผิดพลาดในการพิมพ์!\nเป้าหมาย: $networkPrinterPath\nสาเหตุ: ${printResult.stderr}');
+            'เกิดข้อผิดพลาดในการพิมพ์!\nเป้าหมาย: $targetPrinterPath\nสาเหตุ: ${printResult.stderr}');
       }
     } finally {
       if (await tempFile.exists()) {
