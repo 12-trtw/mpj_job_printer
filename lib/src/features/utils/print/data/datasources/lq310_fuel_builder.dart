@@ -118,14 +118,14 @@ class Lq310FuelOrderBuilder {
       final l4Left = _padRight('ปริมาณ (ลิตร/กก.)', 18) +
           _padRight(fuelQty, 10) +
           '( ' +
-          _padRight(thaiText, 20) +
+          _padRight(thaiText, 19) +
           ' )';
       final l4Right = _padRight('Job no. :', 10) + jobNo;
 
       final l5Left = _padRight('จำนวนเงิน (บาท)', 18) +
           _padRight('', 10) +
           '( ' +
-          _padRight('', 20) +
+          _padRight('', 19) +
           ' )';
 
       final sig1Left = _padRight('ลงชื่อ', 6) +
@@ -154,7 +154,7 @@ class Lq310FuelOrderBuilder {
       formLines[6] = '$l1Left\t$l1Right';
       formLines[7] = '$l2Left\t$l2Right';
       formLines[8] = '$l3Left\t$l3Right';
-      formLines[9] = '$l4Left\t$l4Right';
+      formLines[10] = '$l4Left\t$l4Right';
 
       formLines[11] = l5Left;
 
@@ -164,8 +164,7 @@ class Lq310FuelOrderBuilder {
       formLines[17] = '$sig2Left\t$sig2Right';
 
       formLines[19] = '${_padRight(footerLeft, 45)}\t$footerRight';
-
-      for (int i = 0; i <= 22; i++) {
+      for (int i = 0; i < 33; i++) {
         formContent += formLines[i] + '\r\n';
       }
 
