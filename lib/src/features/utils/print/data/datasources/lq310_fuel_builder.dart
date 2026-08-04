@@ -10,7 +10,6 @@ class Lq310FuelOrderBuilder {
   static const String escThaiTis620 = '\x1B\x74\x15';
   static const String escThai3Pass = '\x1C\x70\x03';
 
-  // กำหนดขนาด Font
   static const String font10Cpi = '\x1B\x50';
   static const String font12Cpi = '\x1B\x4D';
   static const String font15Cpi = '\x1B\x67';
@@ -70,17 +69,18 @@ class Lq310FuelOrderBuilder {
           '$escInit$escLeftMargin0$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThai3Pass$escSetTab';
 
       final fleetId = item['fleet_id']?.toString() ?? '';
-      String dateStr = '....................';
-      String printTime = '';
 
+      String dateStr = '....................';
       if (item['finish_date'] != null &&
           !item['finish_date'].toString().startsWith('0000-00-00')) {
         try {
           final d = DateTime.parse(item['finish_date'].toString());
           dateStr = DateFormat('d MMM yyyy', 'th_TH').format(d);
-          printTime = DateFormat('dd/MM/yy HH:mm', 'en_GB').format(d);
         } catch (_) {}
       }
+
+      final now = DateTime.now();
+      final printTime = DateFormat('dd/MM/yy HH:mm', 'en_GB').format(now);
 
       final vehicle =
           item['vehicle_name']?.toString() ?? '....................';
@@ -152,6 +152,7 @@ class Lq310FuelOrderBuilder {
           _padRight('..................', 20) +
           'พนักงานปั๊มน้ำมัน';
       final displayUser = printByUsername.isEmpty ? '' : printByUsername;
+
       final sig2Right = 'Username: ${_padRight(displayUser, 8)} $printTime';
       lines.add('$sig2Left\t$sig2Right');
 
