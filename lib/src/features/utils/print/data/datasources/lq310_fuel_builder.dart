@@ -64,8 +64,11 @@ class Lq310FuelOrderBuilder {
       {String printByUsername = ''}) async {
     await initializeDateFormatting('th_TH', null);
     await initializeDateFormatting('en_GB', null);
-    final String escSetTab = '\x1B\x44${String.fromCharCode(55)}\x00';
+
+    final String escSetTab = '\x1B\x44${String.fromCharCode(65)}\x00';
     final StringBuffer contentBuffer = StringBuffer();
+
+    final String indent = '        ';
 
     for (final item in printData) {
       String formContent =
@@ -103,28 +106,31 @@ class Lq310FuelOrderBuilder {
 
       final List<String> lines = [];
       lines.add('');
-      lines.add(
-          '$font10Cpi       MPJ Logistics Public Company Limited$font12Cpi');
+      lines.add(indent +
+          '                  $font10Cpi MPJ Logistics Public Company Limited$font12Cpi');
       lines.add('');
-      lines.add(
-          '                        [ ใบสั่งเติมน้ำมัน ]\t.        เลขที่ใบสั่งเติม $fleetId');
+      lines.add(indent +
+          '                         [ ใบสั่งเติมน้ำมัน ]\tเลขที่ใบสั่งเติม $fleetId');
 
-      lines.add('-' * 80);
+      lines.add(indent + ('-' * 80));
       lines.add('');
 
       final l1Left = _padRight('ชื่อปั๊มที่เติม', 18) +
           _padRight('......................', 30);
       final l1Right = _padRight('วันที่', 10) + dateStr;
-      lines.add('$l1Left\t$l1Right');
+      lines.add(indent + '$l1Left\t$l1Right');
+      lines.add('');
 
       final vName = vehicle.length > 30 ? vehicle.substring(0, 30) : vehicle;
       final l2Left = _padRight('ทะเบียนรถที่เติม', 18) + _padRight(vName, 30);
       final l2Right = _padRight('ชื่อ พขร.', 10) + driver;
-      lines.add('$l2Left\t$l2Right');
+      lines.add(indent + '$l2Left\t$l2Right');
+      lines.add('');
 
       final l3Left = _padRight('ชนิดเชื้อเพลิง', 18) + _padRight(fuelName, 30);
       final l3Right = _padRight('เลขไมล์', 10) + mileage;
-      lines.add('$l3Left\t$l3Right');
+      lines.add(indent + '$l3Left\t$l3Right');
+      lines.add('');
 
       final l4Left = _padRight('ปริมาณ (ลิตร/กก.)', 18) +
           _padRight(fuelQty, 10) +
@@ -132,16 +138,20 @@ class Lq310FuelOrderBuilder {
           _padRight(thaiText, 20) +
           ' )';
       final l4Right = _padRight('Job no. :', 10) + jobNo;
-      lines.add('$l4Left\t$l4Right');
+      lines.add(indent + '$l4Left\t$l4Right');
+      lines.add('');
 
       final l5Left = _padRight('จำนวนเงิน (บาท)', 18) +
           _padRight('', 10) +
           '( ' +
           _padRight('', 20) +
           ' )';
-      lines.add(l5Left);
+      lines.add(indent + l5Left);
+      lines.add('');
 
-      lines.add('ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้');
+      lines
+          .add(indent + 'ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้');
+      lines.add('');
 
       final sig1Left = _padRight('ลงชื่อ', 6) +
           _padRight('..................', 20) +
@@ -149,7 +159,8 @@ class Lq310FuelOrderBuilder {
       final sig1Right = _padRight('ลงชื่อ', 6) +
           _padRight('..................', 20) +
           'ผู้สั่งเติม';
-      lines.add('$sig1Left\t$sig1Right');
+      lines.add(indent + '$sig1Left\t$sig1Right');
+      lines.add('');
 
       final sig2Left = _padRight('ลงชื่อ', 6) +
           _padRight('..................', 20) +
@@ -157,15 +168,17 @@ class Lq310FuelOrderBuilder {
       final displayUser = printByUsername.isEmpty ? '' : printByUsername;
 
       final sig2Right = 'Username: ${_padRight(displayUser, 8)} $printTime';
-      lines.add('$sig2Left\t$sig2Right');
+      lines.add(indent + '$sig2Left\t$sig2Right');
+      lines.add('');
 
       final footerLeft = 'หมายเหตุ : ...................';
       final footerRight = 'FM-OP-40, Rev01 (19-05-68)';
-      lines.add('${_padRight(footerLeft, 45)}\t$footerRight');
+      lines.add(indent + '${_padRight(footerLeft, 45)}\t$footerRight');
 
       lines.add('');
       lines.add('');
-      while (lines.length < 23) {
+
+      while (lines.length < 32) {
         lines.add('');
       }
 
