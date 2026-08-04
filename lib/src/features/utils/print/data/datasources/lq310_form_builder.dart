@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:charset_converter/charset_converter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import '../../../thai_print_utils.dart';
 
 class Lq310FormBuilder {
@@ -65,6 +66,8 @@ class Lq310FormBuilder {
 
   Future<Uint8List> buildPrintBuffer(
       List<Map<String, dynamic>> printData) async {
+    await initializeDateFormatting('th_TH', null);
+    await initializeDateFormatting('en_GB', null);
     final StringBuffer contentBuffer = StringBuffer();
 
     for (final item in printData) {

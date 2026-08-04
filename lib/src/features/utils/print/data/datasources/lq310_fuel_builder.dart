@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:charset_converter/charset_converter.dart';
 import 'package:intl/intl.dart';
 import '../../../thai_print_utils.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class Lq310FuelOrderBuilder {
   static const String escInit = '\x1B\x40';
@@ -61,6 +62,8 @@ class Lq310FuelOrderBuilder {
 
   Future<Uint8List> buildPrintBuffer(List<Map<String, dynamic>> printData,
       {String printByUsername = ''}) async {
+    await initializeDateFormatting('th_TH', null);
+    await initializeDateFormatting('en_GB', null);
     final String escSetTab = '\x1B\x44${String.fromCharCode(55)}\x00';
     final StringBuffer contentBuffer = StringBuffer();
 
