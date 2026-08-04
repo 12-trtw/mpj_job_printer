@@ -154,21 +154,21 @@ class Lq310FuelOrderBuilder {
       formLines[5] = '$l1Left\t$l1Right';
       formLines[6] = '$l2Left\t$l2Right';
       formLines[7] = '$l3Left\t$l3Right';
-      formLines[8] = '$l4Left\t$l4Right';
-      formLines[9] = l5Left;
+      formLines[9] = '$l4Left\t$l4Right';
+      formLines[10] = l5Left;
 
-      formLines[11] = 'ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้';
+      formLines[12] = 'ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้';
 
-      formLines[13] = '$sig1Left\t$sig1Right';
-      formLines[15] = '$sig2Left\t$sig2Right';
+      formLines[14] = '$sig1Left\t$sig1Right';
+      formLines[16] = '$sig2Left\t$sig2Right';
 
-      formLines[17] = '${_padRight(footerLeft, 45)}\t$footerRight';
+      formLines[18] = '${_padRight(footerLeft, 45)}\t$footerRight';
 
-      for (int i = 0; i <= 17; i++) {
+      for (int i = 0; i <= 18; i++) {
         formContent += formLines[i] + '\r\n';
       }
 
-      formContent += '\r\n' * 5;
+      formContent += '\r\n' * 4;
 
       contentBuffer.write(formContent);
     }
