@@ -65,7 +65,7 @@ class Lq310FuelOrderBuilder {
     await initializeDateFormatting('th_TH', null);
     await initializeDateFormatting('en_GB', null);
 
-    final String escSetTab = '\x1B\x44${String.fromCharCode(50)}\x00';
+    final String escSetTab = '\x1B\x44${String.fromCharCode(48)}\x00';
     final StringBuffer contentBuffer = StringBuffer();
 
     for (final item in printData) {
@@ -105,27 +105,27 @@ class Lq310FuelOrderBuilder {
           item['start_mileage']?.toString() ?? '....................';
 
       final l1Left = _padRight('ชื่อปั๊มที่เติม', 18) +
-          _padRight('......................', 30);
+          _padRight('......................', 28);
       final l1Right = _padRight('วันที่', 10) + dateStr;
 
-      final vName = vehicle.length > 30 ? vehicle.substring(0, 30) : vehicle;
-      final l2Left = _padRight('ทะเบียนรถที่เติม', 18) + _padRight(vName, 30);
+      final vName = vehicle.length > 28 ? vehicle.substring(0, 28) : vehicle;
+      final l2Left = _padRight('ทะเบียนรถที่เติม', 18) + _padRight(vName, 28);
       final l2Right = _padRight('ชื่อ พขร.', 10) + driver;
 
-      final l3Left = _padRight('ชนิดเชื้อเพลิง', 18) + _padRight(fuelName, 30);
+      final l3Left = _padRight('ชนิดเชื้อเพลิง', 18) + _padRight(fuelName, 28);
       final l3Right = _padRight('เลขไมล์', 10) + mileage;
 
       final l4Left = _padRight('ปริมาณ (ลิตร/กก.)', 18) +
           _padRight(fuelQty, 10) +
           '( ' +
-          _padRight(thaiText, 19) +
+          _padRight(thaiText, 16) +
           ' )';
       final l4Right = _padRight('Job no. :', 10) + jobNo;
 
       final l5Left = _padRight('จำนวนเงิน (บาท)', 18) +
           _padRight('', 10) +
           '( ' +
-          _padRight('', 19) +
+          _padRight('', 16) +
           ' )';
 
       final sig1Left = _padRight('ลงชื่อ', 6) +
@@ -140,7 +140,7 @@ class Lq310FuelOrderBuilder {
           'พนักงานปั๊มน้ำมัน';
       final displayUser = printByUsername.isEmpty ? '' : printByUsername;
 
-      final sig2Right = 'Username: ${_padRight(displayUser, 8)} $printTime';
+      final sig2Right = 'USER ID: ${_padRight(displayUser, 8)} $printTime';
 
       const footerLeft = 'หมายเหตุ : ...................';
       const footerRight = 'FM-OP-40, Rev01 (19-05-68)';
