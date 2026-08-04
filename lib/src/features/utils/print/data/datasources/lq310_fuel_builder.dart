@@ -145,28 +145,30 @@ class Lq310FuelOrderBuilder {
       const footerLeft = 'หมายเหตุ : ...................';
       const footerRight = 'FM-OP-40, Rev01 (19-05-68)';
 
-      formLines[1] =
+      formLines[0] =
           '             $font10Cpi MPJ Logistics Public Company Limited$font12Cpi';
-      formLines[3] =
+      formLines[2] =
           '                         [ ใบสั่งเติมน้ำมัน ]\tเลขที่ใบสั่งเติม $fleetId';
-      formLines[4] = '-' * 80;
+      formLines[3] = '-' * 80;
 
-      formLines[6] = '$l1Left\t$l1Right';
-      formLines[7] = '$l2Left\t$l2Right';
-      formLines[8] = '$l3Left\t$l3Right';
-      formLines[10] = '$l4Left\t$l4Right';
+      formLines[5] = '$l1Left\t$l1Right';
+      formLines[6] = '$l2Left\t$l2Right';
+      formLines[7] = '$l3Left\t$l3Right';
+      formLines[8] = '$l4Left\t$l4Right';
+      formLines[9] = l5Left;
 
-      formLines[11] = l5Left;
+      formLines[11] = 'ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้';
 
-      formLines[13] = 'ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้';
+      formLines[13] = '$sig1Left\t$sig1Right';
+      formLines[15] = '$sig2Left\t$sig2Right';
 
-      formLines[15] = '$sig1Left\t$sig1Right';
-      formLines[17] = '$sig2Left\t$sig2Right';
+      formLines[17] = '${_padRight(footerLeft, 45)}\t$footerRight';
 
-      formLines[19] = '${_padRight(footerLeft, 45)}\t$footerRight';
-      for (int i = 0; i < 33; i++) {
+      for (int i = 0; i <= 17; i++) {
         formContent += formLines[i] + '\r\n';
       }
+
+      formContent += '\r\n' * 5;
 
       contentBuffer.write(formContent);
     }
