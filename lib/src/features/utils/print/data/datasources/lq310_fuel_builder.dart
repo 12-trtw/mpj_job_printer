@@ -74,6 +74,8 @@ class Lq310FuelOrderBuilder {
       String formContent =
           '$escInit$escLeftMargin0$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThai3Pass$escSetTab';
 
+      final List<String> formLines = List.filled(33, '');
+
       final fleetId = item['fleet_id']?.toString() ?? '';
 
       String dateStr = '....................';
@@ -104,30 +106,16 @@ class Lq310FuelOrderBuilder {
       final mileage =
           item['start_mileage']?.toString() ?? '....................';
 
-      final List<String> lines = [];
-      lines.add('');
-      lines.add(indent +
-          '             $font10Cpi MPJ Logistics Public Company Limited$font12Cpi');
-      lines.add('');
-      lines.add(indent +
-          '                         [ ใบสั่งเติมน้ำมัน ]\tเลขที่ใบสั่งเติม $fleetId');
-
-      lines.add(indent + ('-' * 80));
-      lines.add('');
-
       final l1Left = _padRight('ชื่อปั๊มที่เติม', 18) +
           _padRight('......................', 30);
       final l1Right = _padRight('วันที่', 10) + dateStr;
-      lines.add(indent + '$l1Left\t$l1Right');
 
       final vName = vehicle.length > 30 ? vehicle.substring(0, 30) : vehicle;
       final l2Left = _padRight('ทะเบียนรถที่เติม', 18) + _padRight(vName, 30);
       final l2Right = _padRight('ชื่อ พขร.', 10) + driver;
-      lines.add(indent + '$l2Left\t$l2Right');
 
       final l3Left = _padRight('ชนิดเชื้อเพลิง', 18) + _padRight(fuelName, 30);
       final l3Right = _padRight('เลขไมล์', 10) + mileage;
-      lines.add(indent + '$l3Left\t$l3Right');
 
       final l4Left = _padRight('ปริมาณ (ลิตร/กก.)', 18) +
           _padRight(fuelQty, 10) +
@@ -135,20 +123,12 @@ class Lq310FuelOrderBuilder {
           _padRight(thaiText, 20) +
           ' )';
       final l4Right = _padRight('Job no. :', 10) + jobNo;
-      lines.add(indent + '$l4Left\t$l4Right');
-      lines.add('');
 
       final l5Left = _padRight('จำนวนเงิน (บาท)', 18) +
           _padRight('', 10) +
           '( ' +
           _padRight('', 20) +
           ' )';
-      lines.add(indent + l5Left);
-      lines.add('');
-
-      lines
-          .add(indent + 'ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้');
-      lines.add('');
 
       final sig1Left = _padRight('ลงชื่อ', 6) +
           _padRight('..................', 20) +
@@ -156,8 +136,6 @@ class Lq310FuelOrderBuilder {
       final sig1Right = _padRight('ลงชื่อ', 6) +
           _padRight('..................', 20) +
           'ผู้สั่งเติม';
-      lines.add(indent + '$sig1Left\t$sig1Right');
-      lines.add('');
 
       final sig2Left = _padRight('ลงชื่อ', 6) +
           _padRight('..................', 20) +
@@ -165,24 +143,35 @@ class Lq310FuelOrderBuilder {
       final displayUser = printByUsername.isEmpty ? '' : printByUsername;
 
       final sig2Right = 'Username: ${_padRight(displayUser, 8)} $printTime';
-      lines.add(indent + '$sig2Left\t$sig2Right');
-      lines.add('');
 
       final footerLeft = 'หมายเหตุ : ...................';
       final footerRight = 'FM-OP-40, Rev01 (19-05-68)';
-      lines.add(indent + '${_padRight(footerLeft, 45)}\t$footerRight');
 
-      lines.add('');
-      lines.add('');
-      lines.add('');
-      lines.add('');
-      lines.add('');
+      formLines[1] = indent +
+          '             $font10Cpi MPJ Logistics Public Company Limited$font12Cpi';
+      formLines[3] = indent +
+          '                         [ ใบสั่งเติมน้ำมัน ]\tเลขที่ใบสั่งเติม $fleetId';
+      formLines[4] = indent + ('-' * 80);
 
-      while (lines.length < 32) {
-        lines.add('');
+      formLines[6] = indent + '$l1Left\t$l1Right';
+      formLines[7] = indent + '$l2Left\t$l2Right';
+      formLines[8] = indent + '$l3Left\t$l3Right';
+      formLines[9] = indent + '$l4Left\t$l4Right';
+
+      formLines[11] = indent + l5Left;
+
+      formLines[13] =
+          indent + 'ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้';
+
+      formLines[15] = indent + '$sig1Left\t$sig1Right';
+      formLines[17] = indent + '$sig2Left\t$sig2Right';
+
+      formLines[19] = indent + '${_padRight(footerLeft, 45)}\t$footerRight';
+
+      for (int i = 0; i <= 22; i++) {
+        formContent += formLines[i] + '\r\n';
       }
 
-      formContent += lines.join('\r\n') + '\r\n';
       contentBuffer.write(formContent);
     }
 
