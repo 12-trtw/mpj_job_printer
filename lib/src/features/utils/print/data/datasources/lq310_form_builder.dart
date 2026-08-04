@@ -80,17 +80,17 @@ class Lq310FormBuilder {
               ? item['job_start'].toString()
               : item['order_start_date']?.toString();
 
-      final String? actualJobEnd =
-          (item['job_end'] != null && item['job_end'].toString().isNotEmpty)
-              ? item['job_end'].toString()
-              : item['order_end_date']?.toString();
+      // final String? actualJobEnd =
+      //     (item['job_end'] != null && item['job_end'].toString().isNotEmpty)
+      //         ? item['job_end'].toString()
+      //         : item['order_end_date']?.toString();
 
       final jobStartStr = actualJobStart != null && actualJobStart.isNotEmpty
           ? '${_formatThaiDate(actualJobStart)} ${_formatTime(actualJobStart)}'
           : '';
 
-      final jobEndDate = _formatThaiDate(actualJobEnd);
-      final jobEndTime = _formatTime(actualJobEnd);
+      // final jobEndDate = _formatThaiDate(actualJobEnd);
+      // final jobEndTime = _formatTime(actualJobEnd);
       final consignee = item['consignee_name']?.toString() ?? '';
       final customer = item['customer_name']?.toString() ?? '';
       final bookingNo = item['booking_no']?.toString() ?? '';
@@ -125,8 +125,8 @@ class Lq310FormBuilder {
         formLines[10] = ThaiPrintUtils.buildLine(
             [PrintItem(drop2, 23), PrintItem(drop3, 54)]);
       }
-      formLines[12] = ThaiPrintUtils.buildLine(
-          [PrintItem(jobEndDate, 18), PrintItem(jobEndTime, 50)]);
+      // formLines[12] = ThaiPrintUtils.buildLine(
+      //     [PrintItem(jobEndDate, 18), PrintItem(jobEndTime, 50)]);
       formLines[14] = ThaiPrintUtils.buildLine([
         PrintItem(driver, 12),
         PrintItem(carNo, 48),
