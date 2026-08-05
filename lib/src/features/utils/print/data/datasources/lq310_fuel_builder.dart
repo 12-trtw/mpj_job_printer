@@ -193,7 +193,6 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:printing/printing.dart';
 
 class PdfFuelOrderBuilder {
   String _toThaiText(double? numVal) {
