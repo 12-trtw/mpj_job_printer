@@ -266,12 +266,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          runSpacing: 16,
                           children: [
-                            Row(
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
                               children: [
                                 _buildModeButton(
                                   title: '📋 รายการ ORDER',
@@ -286,7 +290,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     );
                                   },
                                 ),
-                                const SizedBox(width: 12),
                                 _buildModeButton(
                                   title: '📋 รายการ JOB',
                                   color: const Color(0xFF2563EB),
@@ -300,7 +303,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     );
                                   },
                                 ),
-                                const SizedBox(width: 12),
                                 _buildModeButton(
                                   title: '⛽ รายการเติมน้ำมัน',
                                   color: const Color(0xFF10B981),
@@ -316,11 +318,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 ),
                               ],
                             ),
-                            Row(
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 12,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 const Icon(Icons.print,
                                     color: Colors.grey, size: 20),
-                                const SizedBox(width: 8),
                                 Container(
                                   height: 35,
                                   padding: const EdgeInsets.symmetric(
@@ -344,7 +348,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
                                 ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFFF97316),
@@ -373,61 +376,78 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        Row(
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          runSpacing: 16,
                           children: [
-                            _buildDateInput(_startDateCtrl, 'ตั้งแต่วันที่'),
-                            const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 8),
-                                child: Text('-')),
-                            _buildDateInput(_endDateCtrl, 'ถึงวันที่'),
-                            const SizedBox(width: 12),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blueGrey,
-                                  foregroundColor: Colors.white,
-                                  fixedSize: const Size.fromHeight(35)),
-                              onPressed: state.isLoading
-                                  ? null
-                                  : () {
-                                      notifier.fetchJobs(
-                                        mode: state.currentMode,
-                                        startDate: _startDateCtrl.text,
-                                        endDate: _endDateCtrl.text,
-                                      );
-                                    },
-                              icon: const Icon(Icons.filter_alt, size: 16),
-                              label: const Text('ดึงข้อมูลตามวันที่',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 12,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                _buildDateInput(
+                                    _startDateCtrl, 'ตั้งแต่วันที่'),
+                                const Text('-'),
+                                _buildDateInput(_endDateCtrl, 'ถึงวันที่'),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blueGrey,
+                                      foregroundColor: Colors.white,
+                                      fixedSize: const Size.fromHeight(35)),
+                                  onPressed: state.isLoading
+                                      ? null
+                                      : () {
+                                          notifier.fetchJobs(
+                                            mode: state.currentMode,
+                                            startDate: _startDateCtrl.text,
+                                            endDate: _endDateCtrl.text,
+                                          );
+                                        },
+                                  icon: const Icon(Icons.filter_alt, size: 16),
+                                  label: const Text('ดึงข้อมูลตามวันที่',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
                             ),
-                            const Spacer(),
-                            SizedBox(
-                              width: 250,
-                              height: 35,
-                              child: TextField(
-                                controller: _keywordCtrl,
-                                decoration: const InputDecoration(
-                                    labelText: 'ค้นหาในตาราง (Real-time)...',
-                                    isDense: true,
-                                    border: OutlineInputBorder(),
-                                    prefixIcon: Icon(Icons.search, size: 18)),
-                                style: const TextStyle(fontSize: 13),
-                                onChanged: (val) => notifier.filterLocal(val),
-                                onSubmitted: (val) => notifier.filterLocal(val),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue.shade700,
-                                  foregroundColor: Colors.white,
-                                  fixedSize: const Size.fromHeight(35)),
-                              onPressed: () =>
-                                  notifier.filterLocal(_keywordCtrl.text),
-                              icon: const Icon(Icons.search, size: 16),
-                              label: const Text('ค้นหา',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 12,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 250,
+                                  height: 35,
+                                  child: TextField(
+                                    controller: _keywordCtrl,
+                                    decoration: const InputDecoration(
+                                        labelText:
+                                            'ค้นหาในตาราง (Real-time)...',
+                                        isDense: true,
+                                        border: OutlineInputBorder(),
+                                        prefixIcon:
+                                            Icon(Icons.search, size: 18)),
+                                    style: const TextStyle(fontSize: 13),
+                                    onChanged: (val) =>
+                                        notifier.filterLocal(val),
+                                    onSubmitted: (val) =>
+                                        notifier.filterLocal(val),
+                                  ),
+                                ),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue.shade700,
+                                      foregroundColor: Colors.white,
+                                      fixedSize: const Size.fromHeight(35)),
+                                  onPressed: () =>
+                                      notifier.filterLocal(_keywordCtrl.text),
+                                  icon: const Icon(Icons.search, size: 16),
+                                  label: const Text('ค้นหา',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -545,10 +565,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       decoration: BoxDecoration(
                           border: Border(
                               top: BorderSide(color: Colors.grey.shade300))),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        runSpacing: 12,
                         children: [
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               const Text('Show ',
                                   style: TextStyle(fontSize: 13)),
@@ -585,7 +608,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   style: const TextStyle(fontSize: 13)),
                             ],
                           ),
-                          Row(
+                          Wrap(
+                            spacing: 12,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               OutlinedButton(
                                 onPressed: state.currentPage > 1
@@ -596,14 +621,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     minimumSize: const Size(60, 32)),
                                 child: const Text('Prev'),
                               ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                child: Text(
-                                    '${state.currentPage} / ${state.totalPages}',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold)),
-                              ),
+                              Text('${state.currentPage} / ${state.totalPages}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
                               OutlinedButton(
                                 onPressed: state.currentPage < state.totalPages
                                     ? () => notifier

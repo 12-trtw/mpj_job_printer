@@ -79,9 +79,13 @@ class PrinterManagerService extends GetxService {
       orElse: () => throw Exception(printerName),
     );
 
-    final success = await Printing.directPrintPdf(
+    final success = await Future.value(Printing.directPrintPdf(
       printer: targetPrinter,
       onLayout: (PdfPageFormat format) async => pdfBytes,
+    )).timeout(
+      const Duration(seconds: 8),
+      onTimeout: () => throw Exception(
+          'ระบบ CUPS ของ macOS ทำงานล่าช้า แนะนำให้ใช้พิมพ์ RAW แทน'),
     );
 
     if (!success) throw Exception('Spooler Error');
@@ -89,28 +93,35 @@ class PrinterManagerService extends GetxService {
 
   Future<void> _sendToRawPrinter(String printerName, Uint8List rawBytes) async {
     final Directory tempDir = await getTemporaryDirectory();
+    final String separator = Platform.pathSeparator;
     final String tempFilePath =
-        '${tempDir.path}\\mpj_flutter_job_${DateTime.now().millisecondsSinceEpoch}.bin';
+        '${tempDir.path}${separator}mpj_flutter_job_${DateTime.now().millisecondsSinceEpoch}.bin';
     final File tempFile = File(tempFilePath);
 
     try {
       await tempFile.writeAsBytes(rawBytes);
 
-      String targetPrinterPath;
-      if (printerName.startsWith(r'\\')) {
-        targetPrinterPath = printerName;
+      if (Platform.isWindows) {
+        String targetPrinterPath = printerName.startsWith(r'\\')
+            ? printerName
+            : '\\\\localhost\\$printerName';
+
+        final ProcessResult printResult = await Process.run(
+          'cmd.exe',
+          ['/c', 'copy', '/B', tempFilePath, targetPrinterPath],
+          runInShell: true,
+        );
+
+        if (printResult.exitCode != 0) throw Exception(printResult.stderr);
+      } else if (Platform.isMacOS || Platform.isLinux) {
+        final ProcessResult printResult = await Process.run(
+          'lp',
+          ['-d', printerName, '-o', 'raw', tempFilePath],
+        );
+
+        if (printResult.exitCode != 0) throw Exception(printResult.stderr);
       } else {
-        targetPrinterPath = '\\\\localhost\\$printerName';
-      }
-
-      final ProcessResult printResult = await Process.run(
-        'cmd.exe',
-        ['/c', 'copy', '/B', tempFilePath, targetPrinterPath],
-        runInShell: true,
-      );
-
-      if (printResult.exitCode != 0) {
-        throw Exception(printResult.stderr);
+        throw Exception('Unsupported OS for RAW Printing');
       }
     } finally {
       if (await tempFile.exists()) {
