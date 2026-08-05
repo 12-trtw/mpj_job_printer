@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
-import 'package:mpj_job_printer/src/services/print_manager_service.dart';
+
+import '../../../services/printer_manager_service.dart';
 
 class PrintDashboardState {
   final bool isLoading;
