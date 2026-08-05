@@ -8,7 +8,8 @@ class Lq310FormBuilder {
   static const String escPageLen = '\x1B\x43\x21';
   static const String escCancelSkip = '\x1B\x4F';
   static const String escThaiTis620 = '\x1B\x74\x15';
-  static const String escThai3Pass = '\x1C\x70\x03';
+  static const String escThaiITP = '\x1C\x70\x00';
+
   static const String font12Cpi = '\x1B\x4D';
 
   static const List<String> _thaiMonths = [
@@ -72,7 +73,7 @@ class Lq310FormBuilder {
 
     for (final item in printData) {
       String formContent =
-          '$escInit$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThai3Pass';
+          '$escInit$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThaiITP';
       final List<String> formLines = List.filled(33, '');
 
       final jobNo =
@@ -83,17 +84,10 @@ class Lq310FormBuilder {
               ? item['job_start'].toString()
               : item['order_start_date']?.toString();
 
-      // final String? actualJobEnd =
-      //     (item['job_end'] != null && item['job_end'].toString().isNotEmpty)
-      //         ? item['job_end'].toString()
-      //         : item['order_end_date']?.toString();
-
       final jobStartStr = actualJobStart != null && actualJobStart.isNotEmpty
           ? '${_formatThaiDate(actualJobStart)} ${_formatTime(actualJobStart)}'
           : '';
 
-      // final jobEndDate = _formatThaiDate(actualJobEnd);
-      // final jobEndTime = _formatTime(actualJobEnd);
       final consignee = item['consignee_name']?.toString() ?? '';
       final customer = item['customer_name']?.toString() ?? '';
       final bookingNo = item['booking_no']?.toString() ?? '';
@@ -105,7 +99,6 @@ class Lq310FormBuilder {
       final drop1 = item['drop1']?.toString() ?? '';
       final drop2 = item['drop2']?.toString() ?? '';
       final drop3 = item['drop3']?.toString() ?? '';
-      // final drop4 = item['drop4']?.toString() ?? '';
 
       final driver = item['driver']?.toString() ?? '';
       final carNo = item['vehicle_name']?.toString() ?? '';
@@ -128,8 +121,6 @@ class Lq310FormBuilder {
         formLines[10] = ThaiPrintUtils.buildLine(
             [PrintItem(drop2, 23), PrintItem(drop3, 54)]);
       }
-      // formLines[12] = ThaiPrintUtils.buildLine(
-      //     [PrintItem(jobEndDate, 18), PrintItem(jobEndTime, 50)]);
       formLines[14] = ThaiPrintUtils.buildLine([
         PrintItem(driver, 12),
         PrintItem(carNo, 48),

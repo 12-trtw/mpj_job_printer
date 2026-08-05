@@ -9,7 +9,7 @@ class Lq310FuelOrderBuilder {
   static const String escPageLen = '\x1B\x43\x21';
   static const String escCancelSkip = '\x1B\x4F';
   static const String escThaiTis620 = '\x1B\x74\x15';
-  static const String escThai3Pass = '\x1C\x70\x03';
+  static const String escThaiITP = '\x1C\x70\x00';
 
   static const String font10Cpi = '\x1B\x50';
   static const String font12Cpi = '\x1B\x4D';
@@ -70,7 +70,7 @@ class Lq310FuelOrderBuilder {
 
     for (final item in printData) {
       String formContent =
-          '$escInit$escLeftMargin0$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThai3Pass$escSetTab';
+          '$escInit$escLeftMargin0$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThaiITP$escSetTab';
 
       final List<String> formLines = List.filled(33, '');
 
