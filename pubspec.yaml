@@ -9,20 +9,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
+
   flutter_riverpod: ^2.5.1
-  
   http: ^1.2.0
-  
-  charset_converter: ^2.1.1
-  
   path_provider: ^2.1.3
-  
   window_manager: ^0.3.8
-  
   intl: ^0.19.0
+  charset_converter: ^2.1.1
   pdf: ^3.12.0
   printing: ^5.14.3
+  get: ^4.7.3
 
 dev_dependencies:
   flutter_test:
@@ -30,8 +26,6 @@ dev_dependencies:
   flutter_lints: ^3.0.0
 
 flutter:
+  uses-material-design: true
   assets:
     - assets/fonts/Kanit-Regular.ttf
-
-flutter:
-  uses-material-design: true

@@ -687,7 +687,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         _previewText('เบอร์ตู้:',
                             '${detail['container_size'] ?? ''} ${detail['container_no'] ?? ''}'),
                       const SizedBox(height: 16),
-                      const Text('ตรวจสอบความถูกต้องแล้วกด "ยืนยันสั่งพิมพ์"',
+                      const Text('กรุณาเลือกรูปแบบที่ต้องการพิมพ์',
                           style: TextStyle(color: Colors.grey, fontSize: 13)),
                     ],
                   ),
@@ -699,17 +699,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           style: TextStyle(color: Colors.grey))),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF97316),
+                        backgroundColor: Colors.blue.shade700,
                         foregroundColor: Colors.white),
                     onPressed: () {
                       Navigator.pop(ctx);
                       final currentUsername =
                           ref.read(authProvider).username ?? '';
                       notifier.executePrint(state.currentMode, previewData,
-                          username: currentUsername);
+                          username: currentUsername, isPdf: true);
                     },
-                    icon: const Icon(Icons.print, size: 18),
-                    label: const Text('ยืนยันสั่งพิมพ์'),
+                    icon: const Icon(Icons.picture_as_pdf, size: 18),
+                    label: const Text('พิมพ์ PDF'),
+                  ),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      final currentUsername =
+                          ref.read(authProvider).username ?? '';
+                      notifier.executePrint(state.currentMode, previewData,
+                          username: currentUsername, isPdf: false);
+                    },
+                    icon: const Icon(Icons.receipt_long, size: 18),
+                    label: const Text('พิมพ์ RAW (สลิป)'),
                   )
                 ],
               ));
@@ -820,15 +834,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           style: TextStyle(color: Colors.grey, fontSize: 16))),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF97316),
+                        backgroundColor: Colors.blue.shade700,
                         foregroundColor: Colors.white),
                     onPressed: () {
                       Navigator.pop(ctx);
                       notifier.executePrint(state.currentMode, previewData,
-                          username: currentUsername);
+                          username: currentUsername, isPdf: true);
                     },
-                    icon: const Icon(Icons.print, size: 18),
-                    label: const Text('ยืนยันสั่งพิมพ์ทั้งหมด',
+                    icon: const Icon(Icons.picture_as_pdf, size: 18),
+                    label: const Text('พิมพ์ PDF ทั้งหมด',
+                        style: TextStyle(fontSize: 16)),
+                  ),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      notifier.executePrint(state.currentMode, previewData,
+                          username: currentUsername, isPdf: false);
+                    },
+                    icon: const Icon(Icons.receipt_long, size: 18),
+                    label: const Text('พิมพ์ RAW ทั้งหมด',
                         style: TextStyle(fontSize: 16)),
                   )
                 ],
