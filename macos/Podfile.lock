@@ -2,6 +2,8 @@ PODS:
   - charset_converter (2.4.0):
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
+  - printing (1.0.0):
+    - FlutterMacOS
   - screen_retriever (0.0.1):
     - FlutterMacOS
   - window_manager (0.2.0):
@@ -10,6 +12,7 @@ PODS:
 DEPENDENCIES:
   - charset_converter (from `Flutter/ephemeral/.symlinks/plugins/charset_converter/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
+  - printing (from `Flutter/ephemeral/.symlinks/plugins/printing/macos`)
   - screen_retriever (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever/macos`)
   - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
 
@@ -18,6 +21,8 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/charset_converter/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
+  printing:
+    :path: Flutter/ephemeral/.symlinks/plugins/printing/macos
   screen_retriever:
     :path: Flutter/ephemeral/.symlinks/plugins/screen_retriever/macos
   window_manager:
@@ -26,6 +31,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   charset_converter: 1181fdf66cb99c88eeaea212f3fcbc734546cb15
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  printing: c4cf83c78fd684f9bc318e6aadc18972aa48f617
   screen_retriever: 4f97c103641aab8ce183fa5af3b87029df167936
   window_manager: 1d01fa7ac65a6e6f83b965471b1a7fdd3f06166c
 

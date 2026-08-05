@@ -70,13 +70,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
       } catch (_) {}
 
       String? apiMessage;
-      if (decoded is List && decoded.isNotEmpty) {
-        apiMessage = decoded[0]['message']?.toString();
 
-        if (decoded[0]['status'] == 'success') {
-          final dataList = decoded[0]['data'];
+      if (decoded is List && decoded.isNotEmpty) {
+        final payload = decoded.first;
+        apiMessage = payload['message']?.toString();
+
+        if (payload['status'] == 'success') {
+          final dataList = payload['data'];
           if (dataList is List && dataList.isNotEmpty) {
-            final data = dataList[0];
+            final data = dataList.first;
             final loggedInUser = data['user_name']?.toString() ?? username;
             final fName = data['user_fname']?.toString() ?? '';
             final lName = data['user_lname']?.toString() ?? '';
