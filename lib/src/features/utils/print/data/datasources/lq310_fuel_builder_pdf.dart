@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:flutter/services.dart' show rootBundle;
 
 class PdfFuelOrderBuilder {
   String _toThaiText(double? numVal) {
@@ -43,14 +42,14 @@ class PdfFuelOrderBuilder {
     return res;
   }
 
-  Future<Uint8List> buildPdf(List<Map<String, dynamic>> printData,
+  Future<Uint8List> buildPdf(
+      List<Map<String, dynamic>> printData, Uint8List fontBytes,
       {String printByUsername = ''}) async {
     await initializeDateFormatting('th_TH', null);
     await initializeDateFormatting('en_GB', null);
 
     final doc = pw.Document();
-    final fontData = await rootBundle.load('assets/fonts/Kanit-Regular.ttf');
-    final ttf = pw.Font.ttf(fontData);
+    final ttf = pw.Font.ttf(fontBytes.buffer.asByteData());
     final style = pw.TextStyle(font: ttf, fontSize: 11);
     final pageFormat =
         PdfPageFormat(8.5 * PdfPageFormat.inch, 5.5 * PdfPageFormat.inch);
