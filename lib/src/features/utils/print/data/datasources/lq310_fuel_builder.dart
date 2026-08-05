@@ -9,9 +9,9 @@ class Lq310FuelOrderBuilder {
   static const String escPageLen = '\x1B\x43\x21';
   static const String escCancelSkip = '\x1B\x4F';
 
-  // 💡 [แก้ไข] รหัส TIS-18 คือ Hex 16
-  static const String escThaiTis18 = '\x1B\x74\x16';
-  static const String escThaiITP = '\x1C\x70\x00';
+  // 💡 กลับมาใช้ระบบ 3 เที่ยว และรหัส TIS-11 (Hex 15) ซึ่งเข้ากับ TIS620 ของ Dart ได้พอดีเป๊ะ
+  static const String escThaiTis11 = '\x1B\x74\x15';
+  static const String escThai3Pass = '\x1C\x70\x03';
 
   static const String font10Cpi = '\x1B\x50';
   static const String font12Cpi = '\x1B\x4D';
@@ -75,9 +75,9 @@ class Lq310FuelOrderBuilder {
       final String escLeftMargin =
           '\x1B\x6C${String.fromCharCode(leftMarginCols)}';
 
-      // 💡 [แก้ไข] ดันคำสั่งบังคับภาษาต่อท้าย escInit ทันที
+      // 💡 แทรกคำสั่ง 3 เที่ยว ต่อท้าย Init ทันที เพื่อป้องกันเครื่องค้างและแสดงผลภาษาไทยให้ถูกต้อง
       String formContent =
-          '$escInit$escThaiITP$escThaiTis18$escLeftMargin$escPageLen$escCancelSkip$font12Cpi$escSetTab';
+          '$escInit$escThai3Pass$escThaiTis11$escLeftMargin$escPageLen$escCancelSkip$font12Cpi$escSetTab';
 
       final List<String> formLines = List.filled(33, '');
 

@@ -8,9 +8,9 @@ class Lq310FormBuilder {
   static const String escPageLen = '\x1B\x43\x21';
   static const String escCancelSkip = '\x1B\x4F';
 
-  // 💡 [แก้ไข] รหัส TIS-18 คือ Hex 16 (เดิม 15 คือ TIS-11)
-  static const String escThaiTis18 = '\x1B\x74\x16';
-  static const String escThaiITP = '\x1C\x70\x00';
+  // 💡 กลับมาใช้ระบบ 3 เที่ยว และรหัส TIS-11
+  static const String escThaiTis11 = '\x1B\x74\x15';
+  static const String escThai3Pass = '\x1C\x70\x03';
 
   static const String font12Cpi = '\x1B\x4D';
 
@@ -77,9 +77,9 @@ class Lq310FormBuilder {
         '\x1B\x6C${String.fromCharCode(leftMarginCols)}';
 
     for (final item in printData) {
-      // 💡 [แก้ไข] ดันคำสั่งบังคับภาษา escThaiITP และ escThaiTis18 มาต่อท้าย escInit ทันที
+      // 💡 แทรกคำสั่ง 3 เที่ยว ต่อท้าย Init ทันที
       String formContent =
-          '$escInit$escThaiITP$escThaiTis18$escLeftMargin$escPageLen$escCancelSkip$font12Cpi';
+          '$escInit$escThai3Pass$escThaiTis11$escLeftMargin$escPageLen$escCancelSkip$font12Cpi';
       final List<String> formLines = List.filled(33, '');
 
       final jobNo =
