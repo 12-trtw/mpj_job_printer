@@ -27,7 +27,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _handleLogin() async {
-    if (_usernameCtrl.text.isEmpty || _passwordCtrl.text.isEmpty) {
+    final username = _usernameCtrl.text.trim();
+    final password = _passwordCtrl.text.trim();
+
+    if (username.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('กรุณากรอก Username และ Password'),
@@ -37,8 +41,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     final success = await ref.read(authProvider.notifier).login(
-          _usernameCtrl.text.trim(),
-          _passwordCtrl.text.trim(),
+          username,
+          password,
         );
 
     if (success) {
@@ -55,6 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } else {
       if (!mounted) return;
       final errorMsg = ref.read(authProvider).error;
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
       );
@@ -62,10 +67,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _startSecretTimer() {
-    _secretTimer = Timer(const Duration(seconds: 7), () {
+    _secretTimer = Timer(const Duration(seconds: 5), () {
       final authState = ref.read(authProvider);
       final newMode = !authState.isDemoMode;
       ref.read(authProvider.notifier).setEnvironment(newMode);
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -138,6 +144,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 32),
                   TextField(
                     controller: _usernameCtrl,
+                    textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
                       labelText: 'Username',
                       border: OutlineInputBorder(),
@@ -148,6 +155,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextField(
                     controller: _passwordCtrl,
                     obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _handleLogin(),
                     decoration: const InputDecoration(
                       labelText: 'Password',
                       border: OutlineInputBorder(),

@@ -38,8 +38,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier() : super(AuthState());
 
   String get _baseUrl => state.isDemoMode
-      ? 'http://tmsthai.com:9100/mpj-v1' // DEMO
-      : 'https://tms.mpjdc.com:7049/mpj-v1'; // Production
+      ? 'http://tmsthai.com:9100/mpj-v1' //demo
+      : 'https://tms.mpjdc.com:7049/mpj-v1'; //production
 
   void setEnvironment(bool isDemo) {
     state = state.copyWith(isDemoMode: isDemo, error: '');
@@ -70,32 +70,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
         if (decoded is List &&
             decoded.isNotEmpty &&
             decoded[0]['status'] == 'success') {
-          final data = decoded[0]['data'][0];
-          final loggedInUser = data['user_name']?.toString() ?? username;
+          final dataList = decoded[0]['data'];
 
-          final fName = data['user_fname']?.toString() ?? '';
-          final lName = data['user_lname']?.toString() ?? '';
+          if (dataList is List && dataList.isNotEmpty) {
+            final data = dataList[0];
+            final loggedInUser = data['user_name']?.toString() ?? username;
+            final fName = data['user_fname']?.toString() ?? '';
+            final lName = data['user_lname']?.toString() ?? '';
 
-          state = state.copyWith(
-            isLoading: false,
-            username: loggedInUser,
-            employeeName: '$fName $lName'.trim(),
-          );
-          return true;
-        } else {
-          state = state.copyWith(
-              isLoading: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-          return false;
+            state = state.copyWith(
+              isLoading: false,
+              username: loggedInUser,
+              employeeName: '$fName $lName'.trim(),
+            );
+            return true;
+          }
         }
+
+        state = state.copyWith(
+            isLoading: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+        return false;
       } else {
         state = state.copyWith(
             isLoading: false,
-            error: 'เซิร์ฟเวอร์มีปัญหา: ${response.statusCode}');
+            error: 'เซิร์ฟเวอร์มีปัญหา: HTTP ${response.statusCode}');
         return false;
       }
     } catch (e) {
       state = state.copyWith(
-          isLoading: false, error: 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว กรุณาลองใหม่');
+          isLoading: false, error: 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว ($e)');
       return false;
     }
   }

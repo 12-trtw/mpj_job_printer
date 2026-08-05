@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:mpj_job_printer/src/features/presentation/views/login_screen.dart';
+import 'package:mpj_job_printer/src/services/windows_printer_service.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  Get.put(PrinterManagerService());
+
   runApp(
     const ProviderScope(
       child: MyApp(),
