@@ -70,7 +70,7 @@ class Lq310FormBuilder {
     await initializeDateFormatting('th_TH', null);
     await initializeDateFormatting('en_GB', null);
     final StringBuffer contentBuffer = StringBuffer();
-    final int leftMarginCols = 19;
+    final int leftMarginCols = 3;
     final String escLeftMargin =
         '\x1B\x6C${String.fromCharCode(leftMarginCols)}';
 
