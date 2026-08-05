@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:mpj_job_printer/src/features/utils/print/data/datasources/lq310_form_builder.dart';
+import 'package:mpj_job_printer/src/features/utils/print/data/datasources/lq310_fuel_builder.dart';
 
 import '../../../services/windows_printer_service.dart';
-import '../../utils/print/data/datasources/lq310_form_builder.dart';
-import '../../utils/print/data/datasources/lq310_fuel_builder.dart';
 
 class PrintDashboardState {
   final bool isLoading;
@@ -215,10 +215,13 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
           isError: true, statusMessage: 'กรุณาเลือกเครื่องพิมพ์ก่อนครับ');
       return;
     }
+
+    // 💡 [แก้ไข 2] เปลี่ยนข้อความแจ้งเตือนให้สอดคล้องกับการทำ PDF
     state = state.copyWith(
         isPrinting: true,
         isError: false,
-        statusMessage: 'กำลังประมวลผลคำสั่งพิมพ์...');
+        statusMessage: 'กำลังสร้างไฟล์ PDF และส่งเข้าเครื่องพิมพ์...');
+
     try {
       final itemsToPrint = state.jobs
           .asMap()
@@ -233,12 +236,12 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
 
       if (itemsToPrint.isEmpty) throw Exception('ไม่พบข้อมูลที่ต้องการพิมพ์');
 
-      final rawBytes = mode == 'job'
-          ? await Lq310FormBuilder().buildPrintBuffer(itemsToPrint)
-          : await Lq310FuelOrderBuilder().buildPrintBuffer(itemsToPrint);
+      final pdfBytes = mode == 'job'
+          ? await PdfJobOrderBuilder().buildPdf(itemsToPrint)
+          : await PdfFuelOrderBuilder().buildPdf(itemsToPrint);
 
-      await _printerService.printRawData(
-          printerName: state.selectedPrinter!, rawTis620Bytes: rawBytes);
+      await _printerService.printPdfData(
+          printerName: state.selectedPrinter!, pdfBytes: pdfBytes);
 
       state = state.copyWith(
           isPrinting: false,

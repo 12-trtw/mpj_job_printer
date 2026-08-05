@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   charset_converter
+  printing
   screen_retriever
   window_manager
 )
