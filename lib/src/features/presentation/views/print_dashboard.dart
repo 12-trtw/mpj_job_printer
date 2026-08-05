@@ -216,7 +216,6 @@ class PrintDashboardNotifier extends StateNotifier<PrintDashboardState> {
       return;
     }
 
-    // 💡 [แก้ไข 2] เปลี่ยนข้อความแจ้งเตือนให้สอดคล้องกับการทำ PDF
     state = state.copyWith(
         isPrinting: true,
         isError: false,
