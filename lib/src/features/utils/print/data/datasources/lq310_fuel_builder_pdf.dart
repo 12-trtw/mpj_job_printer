@@ -52,9 +52,16 @@ class PdfFuelOrderBuilder {
     final fontData = await rootBundle.load('assets/fonts/Kanit-Regular.ttf');
     final ttf = pw.Font.ttf(fontData);
     final style = pw.TextStyle(font: ttf, fontSize: 11);
-
     final pageFormat =
         PdfPageFormat(8.5 * PdfPageFormat.inch, 5.5 * PdfPageFormat.inch);
+
+    pw.Widget _pos(String text, int col, int line) {
+      return pw.Positioned(
+        left: (col + 3) * 6.0,
+        top: line * 12.0,
+        child: pw.Text(text, style: style),
+      );
+    }
 
     for (final item in printData) {
       final fleetId = item['fleet_id']?.toString() ?? '';
@@ -86,60 +93,56 @@ class PdfFuelOrderBuilder {
           item['start_mileage']?.toString() ?? '....................';
 
       String displayUser = printByUsername.isEmpty ? '' : printByUsername;
-      if (displayUser.length > 12) displayUser = displayUser.substring(0, 12);
+      if (displayUser.length > 8) displayUser = displayUser.substring(0, 8);
 
       doc.addPage(
         pw.Page(
           pageFormat: pageFormat,
-          margin: const pw.EdgeInsets.only(left: 30, top: 20, right: 20),
+          margin: pw.EdgeInsets.zero,
           build: (pw.Context context) {
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+            return pw.Stack(
               children: [
-                pw.Center(
-                    child: pw.Text('MPJ Logistics Public Company Limited',
-                        style: style)),
-                pw.SizedBox(height: 10),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
-                  children: [
-                    pw.Text('[ ใบสั่งเติมน้ำมัน ]', style: style),
-                    pw.SizedBox(width: 40),
-                    pw.Text('เลขที่ใบสั่งเติม $fleetId', style: style),
-                  ],
-                ),
-                pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
-                pw.SizedBox(height: 10),
-
-                // จัดคอลัมน์ซ้าย (กว้าง 280) และขวา
-                _buildRow('ชื่อปั๊มที่เติม', '......................', 'วันที่',
-                    dateStr, style),
-                _buildRow(
-                    'ทะเบียนรถที่เติม', vehicle, 'ชื่อ พขร.', driver, style),
-                _buildRow(
-                    'ชนิดเชื้อเพลิง', fuelName, 'เลขไมล์', mileage, style),
-                _buildRow('ปริมาณ (ลิตร/กก.)', '$fuelQty   ( $thaiText )',
-                    'Job no. :', jobNo, style),
-                _buildRow('จำนวนเงิน (บาท)',
-                    '..........   ( .................... )', '', '', style),
-
-                pw.SizedBox(height: 15),
-                pw.Text('ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้',
-                    style: style),
-                pw.SizedBox(height: 15),
-
-                _buildRow('ลงชื่อ', '.................. พนักงานขับรถ', 'ลงชื่อ',
-                    '.................. ผู้สั่งเติม', style),
-                _buildRow('ลงชื่อ', '.................. พนักงานปั๊มน้ำมัน',
-                    'USER ID:', '$displayUser  $printTime', style),
-
-                pw.Spacer(),
-                pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text('หมายเหตุ : ...................', style: style),
-                      pw.Text('FM-OP-40, Rev01 (19-05-68)', style: style),
-                    ])
+                _pos('MPJ Logistics Public Company Limited', 13, 0),
+                _pos('[ ใบสั่งเติมน้ำมัน ]', 27, 2),
+                _pos('เลขที่ใบสั่งเติม $fleetId', 48, 2),
+                _pos('-' * 80, 0, 3),
+                _pos('ชื่อปั๊มที่เติม', 0, 5),
+                _pos('......................', 18, 5),
+                _pos('วันที่', 48, 5),
+                _pos(dateStr, 58, 5),
+                _pos('ทะเบียนรถที่เติม', 0, 6),
+                _pos(vehicle, 18, 6),
+                _pos('ชื่อ พขร.', 48, 6),
+                _pos(driver, 58, 6),
+                _pos('ชนิดเชื้อเพลิง', 0, 7),
+                _pos(fuelName, 18, 7),
+                _pos('เลขไมล์', 48, 7),
+                _pos(mileage, 58, 7),
+                _pos('ปริมาณ (ลิตร/กก.)', 0, 9),
+                _pos(fuelQty, 18, 9),
+                _pos('( ', 28, 9),
+                _pos(thaiText, 30, 9),
+                _pos(' )', 46, 9),
+                _pos('Job no. :', 48, 9),
+                _pos(jobNo, 58, 9),
+                _pos('จำนวนเงิน (บาท)', 0, 10),
+                _pos('(                  )', 28, 10),
+                _pos('ใบสั่งเติมน้ำมันมีอายุสามวันนับจากวันที่ระบุในบิลนี้', 0,
+                    12),
+                _pos('ลงชื่อ', 0, 14),
+                _pos('..................', 6, 14),
+                _pos('พนักงานขับรถ', 26, 14),
+                _pos('ลงชื่อ', 48, 14),
+                _pos('..................', 54, 14),
+                _pos('ผู้สั่งเติม', 74, 14),
+                _pos('ลงชื่อ', 0, 16),
+                _pos('..................', 6, 16),
+                _pos('พนักงานปั๊มน้ำมัน', 26, 16),
+                _pos('USER ID:', 48, 16),
+                _pos(displayUser, 57, 16),
+                _pos(printTime, 66, 16),
+                _pos('หมายเหตุ : ...................', 0, 18),
+                _pos('FM-OP-40, Rev01 (19-05-68)', 48, 18),
               ],
             );
           },
@@ -147,25 +150,5 @@ class PdfFuelOrderBuilder {
       );
     }
     return await doc.save();
-  }
-
-  pw.Widget _buildRow(String label1, String val1, String label2, String val2,
-      pw.TextStyle style) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 6),
-      child: pw.Row(
-        children: [
-          pw.SizedBox(
-              width: 280,
-              child: pw.Row(children: [
-                pw.SizedBox(width: 90, child: pw.Text(label1, style: style)),
-                pw.Expanded(child: pw.Text(val1, style: style)),
-              ])),
-          if (label2.isNotEmpty)
-            pw.SizedBox(width: 60, child: pw.Text(label2, style: style)),
-          pw.Expanded(child: pw.Text(val2, style: style)),
-        ],
-      ),
-    );
   }
 }

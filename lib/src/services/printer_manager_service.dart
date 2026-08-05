@@ -23,9 +23,7 @@ class PdfJobPrintStrategy implements PrintStrategy {
 
 class PdfFuelPrintStrategy implements PrintStrategy {
   final String username;
-
   PdfFuelPrintStrategy(this.username);
-
   @override
   Future<Uint8List> generateBytes(List<Map<String, dynamic>> jobs) async {
     return await PdfFuelOrderBuilder()
@@ -42,9 +40,7 @@ class RawJobPrintStrategy implements PrintStrategy {
 
 class RawFuelPrintStrategy implements PrintStrategy {
   final String username;
-
   RawFuelPrintStrategy(this.username);
-
   @override
   Future<Uint8List> generateBytes(List<Map<String, dynamic>> jobs) async {
     return await Lq310FuelOrderBuilder()

@@ -57,10 +57,10 @@ class PdfJobOrderBuilder {
     final pageFormat =
         PdfPageFormat(8.5 * PdfPageFormat.inch, 5.5 * PdfPageFormat.inch);
 
-    pw.Widget _pos(String text, double col, double line) {
+    pw.Widget _pos(String text, int col, int line, [int downOffset = 0]) {
       return pw.Positioned(
-        left: col * 6.0,
-        top: line * 12.0,
+        left: (col + 3) * 6.0,
+        top: (line * 12.0) + (downOffset / 3.0),
         child: pw.Text(text, style: style),
       );
     }
@@ -89,7 +89,6 @@ class PdfJobOrderBuilder {
       final driver = item['driver']?.toString() ?? '';
       final carNo = item['vehicle_name']?.toString() ?? '';
       final carCode = item['veh_code']?.toString() ?? '';
-      final double offsetLeft = 3.0;
 
       doc.addPage(
         pw.Page(
@@ -98,25 +97,25 @@ class PdfJobOrderBuilder {
           build: (pw.Context context) {
             return pw.Stack(
               children: [
-                _pos(jobNo, offsetLeft + 67, 0),
-                _pos(jobStartStr, offsetLeft + 4, 3),
-                _pos(customer, offsetLeft + 8, 4),
-                _pos(agent, offsetLeft + 4, 5),
-                _pos(consignee, offsetLeft + 8, 6),
-                _pos(bookingNo, offsetLeft + 52, 6),
-                _pos(drop1, offsetLeft + 23, 8.3),
-                _pos(drop2, offsetLeft + 54, 8.3),
-                _pos(size, offsetLeft + 1, 9.5),
-                _pos(containerNo, offsetLeft + 20, 9.5),
-                _pos(seal, offsetLeft + 73, 9.5),
+                _pos(jobNo, 67, 0),
+                _pos(jobStartStr, 4, 3),
+                _pos(customer, 8, 4),
+                _pos(agent, 4, 5),
+                _pos(consignee, 8, 6),
+                _pos(bookingNo, 52, 6),
+                _pos(drop1, 23, 8, 12),
+                _pos(drop2, 54, 8, 12),
+                _pos(size, 1, 9, 18),
+                _pos(containerNo, 20, 9, 18),
+                _pos(seal, 73, 9, 18),
                 if (drop3.trim().isNotEmpty) ...[
-                  _pos(drop2, offsetLeft + 23, 10.7),
-                  _pos(drop3, offsetLeft + 54, 10.7),
+                  _pos(drop2, 23, 10, 26),
+                  _pos(drop3, 54, 10, 26),
                 ],
-                _pos(driver, offsetLeft + 12, 14.8),
-                _pos(carNo, offsetLeft + 48, 14.8),
-                _pos(carCode, offsetLeft + 72, 14.8),
-                _pos(driver, offsetLeft + 54, 17),
+                _pos(driver, 12, 14, 28),
+                _pos(carNo, 48, 14, 28),
+                _pos(carCode, 72, 14, 28),
+                _pos(driver, 54, 17),
               ],
             );
           },

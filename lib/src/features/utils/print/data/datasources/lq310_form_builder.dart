@@ -76,12 +76,10 @@ class Lq310FormBuilder {
 
       final jobNo =
           item['job_no']?.toString() ?? item['order_number']?.toString() ?? '';
-
       final String? actualJobStart =
           (item['job_start'] != null && item['job_start'].toString().isNotEmpty)
               ? item['job_start'].toString()
               : item['order_start_date']?.toString();
-
       final jobStartStr = actualJobStart != null && actualJobStart.isNotEmpty
           ? '${_formatThaiDate(actualJobStart)} ${_formatTime(actualJobStart)}'
           : '';
@@ -93,11 +91,9 @@ class Lq310FormBuilder {
       final size = item['container_size']?.toString() ?? '';
       final containerNo = item['container_no']?.toString() ?? '';
       final seal = item['seal_desc']?.toString() ?? '';
-
       final drop1 = item['drop1']?.toString() ?? '';
       final drop2 = item['drop2']?.toString() ?? '';
       final drop3 = item['drop3']?.toString() ?? '';
-
       final driver = item['driver']?.toString() ?? '';
       final carNo = item['vehicle_name']?.toString() ?? '';
       final carCode = item['veh_code']?.toString() ?? '';
@@ -149,9 +145,8 @@ class Lq310FormBuilder {
 
     final Uint8List? tis620Bytes =
         await CharsetConverter.encode('TIS620', contentBuffer.toString());
-    if (tis620Bytes == null) {
+    if (tis620Bytes == null)
       throw Exception('ไม่สามารถเข้ารหัสภาษาไทย TIS-620 ได้');
-    }
     return tis620Bytes;
   }
 }
