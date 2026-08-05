@@ -166,7 +166,7 @@ import 'dart:typed_data';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class PdfJobOrderBuilder {
   static const List<String> _thaiMonths = [
@@ -214,7 +214,8 @@ class PdfJobOrderBuilder {
     await initializeDateFormatting('en_GB', null);
 
     final doc = pw.Document();
-    final ttf = await PdfGoogleFonts.sarabunRegular();
+    final fontData = await rootBundle.load('assets/fonts/Kanit-Regular.ttf');
+    final ttf = pw.Font.ttf(fontData);
     final style = pw.TextStyle(font: ttf, fontSize: 11);
 
     final pageFormat =

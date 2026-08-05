@@ -192,6 +192,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:printing/printing.dart';
 
 class PdfFuelOrderBuilder {
@@ -238,7 +239,8 @@ class PdfFuelOrderBuilder {
     await initializeDateFormatting('en_GB', null);
 
     final doc = pw.Document();
-    final ttf = await PdfGoogleFonts.sarabunRegular();
+    final fontData = await rootBundle.load('assets/fonts/Kanit-Regular.ttf');
+    final ttf = pw.Font.ttf(fontData);
     final style = pw.TextStyle(font: ttf, fontSize: 11);
 
     final pageFormat =
@@ -279,7 +281,6 @@ class PdfFuelOrderBuilder {
       doc.addPage(
         pw.Page(
           pageFormat: pageFormat,
-          // 💡 ขอบกระดาษ (ซ้าย 30 จุด = ประมาณ 3 ตัวอักษร, บน 20)
           margin: const pw.EdgeInsets.only(left: 30, top: 20, right: 20),
           build: (pw.Context context) {
             return pw.Column(
