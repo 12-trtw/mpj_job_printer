@@ -12,6 +12,10 @@ import '../features/utils/print/data/datasources/lq310_form_builder.dart';
 import '../features/utils/print/data/datasources/lq310_fuel_builder.dart'
     hide Lq310FormBuilder;
 
+// ---------------------------------------------------------------------------
+// 1. Payload & Strategies
+// ---------------------------------------------------------------------------
+
 class _PdfPayload {
   final List<Map<String, dynamic>> jobs;
   final Uint8List fontBytes;
@@ -78,17 +82,33 @@ Future<Uint8List> _generateRawFuel(Map<String, dynamic> payload) async {
       .buildPrintBuffer(payload['jobs'], printByUsername: payload['username']);
 }
 
+Future<T> _safeGuard<T>({
+  required Future<T> Function() task,
+  required int timeoutSeconds,
+  required String timeoutMessage,
+}) async {
+  try {
+    // เนื่องจาก task() คืนค่าเป็น Future<T> อยู่แล้ว จึงเรียกใช้และต่อด้วย .timeout() ได้เลย
+    // หากต้องการการทำงานแบบ asynchronous แท้ๆ ครอบอีกชั้น สามารถใช้ Future.sync หรือ Future.microtask ได้
+    return await Future.sync(task).timeout(
+      Duration(seconds: timeoutSeconds),
+      onTimeout: () => throw Exception(timeoutMessage),
+    );
+  } catch (e) {
+    throw Exception(e.toString().replaceAll('Exception: ', ''));
+  }
+}
+
 class PrinterManagerService extends GetxService {
   Future<List<String>> getInstalledPrinters() async {
-    try {
-      final printers = await Future.value(Printing.listPrinters()).timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => <Printer>[],
-      );
-      return printers.where((p) => p.isAvailable).map((p) => p.name).toList();
-    } catch (_) {
-      return [];
-    }
+    return _safeGuard(
+      task: () async {
+        final printers = await Printing.listPrinters();
+        return printers.where((p) => p.isAvailable).map((p) => p.name).toList();
+      },
+      timeoutSeconds: 5,
+      timeoutMessage: 'โหลดรายชื่อเครื่องพิมพ์ไม่สำเร็จ (Timeout)',
+    ).catchError((_) => <String>[]);
   }
 
   Future<void> printJobs({
@@ -96,46 +116,46 @@ class PrinterManagerService extends GetxService {
     required List<Map<String, dynamic>> jobs,
     required PrintStrategy strategy,
   }) async {
-    try {
-      final Uint8List printBytes =
-          await Future.value(strategy.generateBytes(jobs)).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () => throw Exception('การประมวลผลไฟล์หมดเวลา (Timeout)'),
-      );
+    final Uint8List printBytes = await _safeGuard(
+      task: () => strategy.generateBytes(jobs),
+      timeoutSeconds: 15,
+      timeoutMessage: 'การประมวลผลไฟล์ข้อมูลหมดเวลา (Timeout)',
+    );
 
-      if (strategy is PdfJobPrintStrategy || strategy is PdfFuelPrintStrategy) {
-        await _sendToPdfPrinter(printerName, printBytes);
-      } else {
-        await _sendToRawPrinter(printerName, printBytes);
-      }
-    } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    if (strategy is PdfJobPrintStrategy || strategy is PdfFuelPrintStrategy) {
+      await _sendToPdfPrinter(printerName, printBytes);
+    } else {
+      await _sendToRawPrinter(printerName, printBytes);
     }
   }
 
   Future<void> _sendToPdfPrinter(String printerName, Uint8List pdfBytes) async {
-    final printers = await Future.value(Printing.listPrinters()).timeout(
-      const Duration(seconds: 5),
-      onTimeout: () =>
-          throw Exception('ระบบปริ้นเตอร์ของ macOS (CUPS) ไม่ตอบสนอง'),
+    final targetPrinter = await _safeGuard(
+      task: () async {
+        final printers = await Printing.listPrinters();
+        return printers.firstWhere(
+          (p) => p.name == printerName,
+          orElse: () => throw Exception('ไม่พบเครื่องพิมพ์: $printerName'),
+        );
+      },
+      timeoutSeconds: 5,
+      timeoutMessage: 'ค้นหาเครื่องพิมพ์ไม่พบ (CUPS Spooler ไม่ตอบสนอง)',
     );
 
-    final targetPrinter = printers.firstWhere(
-      (p) => p.name == printerName,
-      orElse: () => throw Exception('ไม่พบเครื่องพิมพ์: $printerName'),
-    );
-
-    final bool success = await Future.value(Printing.directPrintPdf(
-      printer: targetPrinter,
-      onLayout: (PdfPageFormat format) async => pdfBytes,
-    )).timeout(
-      const Duration(seconds: 10),
-      onTimeout: () => false,
+    final success = await _safeGuard(
+      task: () async {
+        // ห่อหุ้มด้วย Future.value เพื่อแปลง FutureOr ให้เป็น Future แท้
+        return await Future.value(Printing.directPrintPdf(
+          printer: targetPrinter,
+          onLayout: (PdfPageFormat format) async => pdfBytes,
+        ));
+      },
+      timeoutSeconds: 10,
+      timeoutMessage: 'คิวพิมพ์ของระบบ OS ไม่ตอบสนอง (Spooler Timeout)',
     );
 
     if (!success) {
-      throw Exception(
-          'คิวพิมพ์ของ macOS ไม่ตอบสนอง (Spooler Timeout) กรุณาใช้พิมพ์ RAW แทน');
+      throw Exception('เครื่องพิมพ์ยกเลิกคำสั่ง กรุณาใช้พิมพ์ RAW แทน');
     }
   }
 
@@ -149,36 +169,27 @@ class PrinterManagerService extends GetxService {
     try {
       await tempFile.writeAsBytes(rawBytes);
 
-      if (Platform.isWindows) {
-        String targetPrinterPath = printerName.startsWith(r'\\')
-            ? printerName
-            : '\\\\localhost\\$printerName';
-
-        final ProcessResult printResult = await Future.value(Process.run(
-          'cmd.exe',
-          ['/c', 'copy', '/B', tempFilePath, targetPrinterPath],
-          runInShell: true,
-        )).timeout(
-          const Duration(seconds: 8),
-          onTimeout: () =>
-              throw Exception('ส่งคำสั่งพิมพ์ไปยัง Windows ล้มเหลว (Timeout)'),
-        );
-
-        if (printResult.exitCode != 0) throw Exception(printResult.stderr);
-      } else if (Platform.isMacOS || Platform.isLinux) {
-        final ProcessResult printResult = await Future.value(Process.run(
-          'lp',
-          ['-d', printerName, '-o', 'raw', tempFilePath],
-        )).timeout(
-          const Duration(seconds: 8),
-          onTimeout: () =>
-              throw Exception('ส่งคำสั่งพิมพ์ lp บน macOS ล้มเหลว (Timeout)'),
-        );
-
-        if (printResult.exitCode != 0) throw Exception(printResult.stderr);
-      } else {
-        throw Exception('ระบบปฏิบัติการไม่รองรับการพิมพ์แบบ RAW');
-      }
+      await _safeGuard(
+        task: () async {
+          if (Platform.isWindows) {
+            String targetPath = printerName.startsWith(r'\\')
+                ? printerName
+                : '\\\\localhost\\$printerName';
+            final res = await Process.run(
+                'cmd.exe', ['/c', 'copy', '/B', tempFilePath, targetPath],
+                runInShell: true);
+            if (res.exitCode != 0) throw Exception(res.stderr);
+          } else if (Platform.isMacOS || Platform.isLinux) {
+            final res = await Process.run(
+                'lp', ['-d', printerName, '-o', 'raw', tempFilePath]);
+            if (res.exitCode != 0) throw Exception(res.stderr);
+          } else {
+            throw Exception('ระบบปฏิบัติการไม่รองรับ RAW Printing');
+          }
+        },
+        timeoutSeconds: 8,
+        timeoutMessage: 'ส่งคำสั่งพิมพ์ไปยัง OS ล้มเหลว (Timeout)',
+      );
     } finally {
       if (await tempFile.exists()) {
         await tempFile.delete();
