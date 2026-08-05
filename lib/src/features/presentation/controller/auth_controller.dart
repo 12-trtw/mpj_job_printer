@@ -38,8 +38,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier() : super(AuthState());
 
   String get _baseUrl => state.isDemoMode
-      ? 'http://tmsthai.com:9100/mpj-v1' //demo
-      : 'https://tms.mpjdc.com:7049/mpj-v1'; //production
+      ? 'http://tmsthai.com:9100/mpj-v1'
+      : 'https://tms.mpjdc.com:7049/mpj-v1';
 
   void setEnvironment(bool isDemo) {
     state = state.copyWith(isDemoMode: isDemo, error: '');
@@ -64,14 +64,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
           )
           .timeout(const Duration(seconds: 15));
 
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      dynamic decoded;
+      try {
+        decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      } catch (_) {}
 
-        if (decoded is List &&
-            decoded.isNotEmpty &&
-            decoded[0]['status'] == 'success') {
+      String? apiMessage;
+      if (decoded is List && decoded.isNotEmpty) {
+        apiMessage = decoded[0]['message']?.toString();
+
+        if (decoded[0]['status'] == 'success') {
           final dataList = decoded[0]['data'];
-
           if (dataList is List && dataList.isNotEmpty) {
             final data = dataList[0];
             final loggedInUser = data['user_name']?.toString() ?? username;
@@ -86,16 +89,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
             return true;
           }
         }
-
-        state = state.copyWith(
-            isLoading: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-        return false;
-      } else {
-        state = state.copyWith(
-            isLoading: false,
-            error: 'เซิร์ฟเวอร์มีปัญหา: HTTP ${response.statusCode}');
-        return false;
+      } else if (decoded is Map) {
+        apiMessage = decoded['message']?.toString();
       }
+
+      final errorMsg = apiMessage ??
+          (response.statusCode == 200
+              ? 'รูปแบบข้อมูลจากเซิร์ฟเวอร์ไม่ถูกต้อง'
+              : 'เซิร์ฟเวอร์มีปัญหา: HTTP ${response.statusCode}');
+
+      state = state.copyWith(isLoading: false, error: errorMsg);
+      return false;
     } catch (e) {
       state = state.copyWith(
           isLoading: false, error: 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว ($e)');

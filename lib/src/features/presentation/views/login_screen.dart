@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:mpj_job_printer/src/features/presentation/controller/auth_controller.dart';
 import 'package:mpj_job_printer/src/features/presentation/controller/print_controller.dart';
 import 'dashboard_screen.dart';
@@ -15,7 +16,6 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _usernameCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-
   Timer? _secretTimer;
 
   @override
@@ -31,19 +31,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final password = _passwordCtrl.text.trim();
 
     if (username.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('กรุณากรอก Username และ Password'),
-            backgroundColor: Colors.red),
+      Get.snackbar(
+        'แจ้งเตือน',
+        'กรุณากรอก Username และ Password ให้ครบถ้วน',
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
       );
       return;
     }
 
-    final success = await ref.read(authProvider.notifier).login(
-          username,
-          password,
-        );
+    final success =
+        await ref.read(authProvider.notifier).login(username, password);
 
     if (success) {
       if (!mounted) return;
@@ -59,9 +59,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } else {
       if (!mounted) return;
       final errorMsg = ref.read(authProvider).error;
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
+      Get.snackbar(
+        'เข้าสู่ระบบล้มเหลว',
+        errorMsg,
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 4),
       );
     }
   }
@@ -71,14 +76,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final authState = ref.read(authProvider);
       final newMode = !authState.isDemoMode;
       ref.read(authProvider.notifier).setEnvironment(newMode);
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              newMode ? '🛠️ เปิดใช้งานโหมด DEMO' : '✅ กลับสู่โหมด PRODUCTION'),
-          backgroundColor: newMode ? Colors.red : Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
+
+      Get.snackbar(
+        'ระบบสถานะ',
+        newMode ? '🛠️ เปิดใช้งานโหมด DEMO' : '✅ กลับสู่โหมด PRODUCTION',
+        backgroundColor:
+            newMode ? Colors.orange.shade700 : Colors.green.shade700,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
       );
     });
   }
@@ -163,6 +169,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       prefixIcon: Icon(Icons.lock),
                     ),
                   ),
+                  if (authState.error.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      authState.error,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
