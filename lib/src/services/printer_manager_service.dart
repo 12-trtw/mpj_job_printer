@@ -88,8 +88,6 @@ Future<T> _safeGuard<T>({
   required String timeoutMessage,
 }) async {
   try {
-    // เนื่องจาก task() คืนค่าเป็น Future<T> อยู่แล้ว จึงเรียกใช้และต่อด้วย .timeout() ได้เลย
-    // หากต้องการการทำงานแบบ asynchronous แท้ๆ ครอบอีกชั้น สามารถใช้ Future.sync หรือ Future.microtask ได้
     return await Future.sync(task).timeout(
       Duration(seconds: timeoutSeconds),
       onTimeout: () => throw Exception(timeoutMessage),

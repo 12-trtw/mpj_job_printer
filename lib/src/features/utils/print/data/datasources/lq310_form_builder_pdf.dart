@@ -40,6 +40,11 @@ class PdfJobOrderBuilder {
       final d = DateTime.parse(dateString);
       return '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
     } catch (_) {
+      final parts = dateString.split(RegExp(r'[ T]'));
+      if (parts.length > 1) {
+        final timeStr = parts[1];
+        return timeStr.length >= 5 ? timeStr.substring(0, 5) : timeStr;
+      }
       return '';
     }
   }
@@ -51,15 +56,31 @@ class PdfJobOrderBuilder {
 
     final doc = pw.Document();
     final ttf = pw.Font.ttf(fontBytes.buffer.asByteData());
-    final style = pw.TextStyle(font: ttf, fontSize: 11);
+
+    // กำหนดขนาดฟอนต์ 10pt เพื่อให้พอดีกับระยะบรรทัด 12pt (6 LPI)
+    final style = pw.TextStyle(font: ttf, fontSize: 10);
     final pageFormat =
         PdfPageFormat(8.5 * PdfPageFormat.inch, 5.5 * PdfPageFormat.inch);
 
+    // มาตราส่วนของ Dot Matrix 12 CPI และ 6 LPI
+    const double charWidth12Cpi = 6.0; // 12 ตัวอักษร/นิ้ว = 72 / 12 = 6.0 pt
+    const double linePitch6Lpi = 12.0; // 6 บรรทัด/นิ้ว = 72 / 6 = 12.0 pt
+    const double leftCharMargin =
+        3.0; // ชดเชยระยะระยะขอบซ้ายของหนามเตย (3 ตัวอักษร)
+
     pw.Widget _pos(String text, int col, int line, [int downOffset = 0]) {
+      // ESC J n ใน LQ-310 มีขนาด 1/180 นิ้ว (0.4 pt ต่อหน่วย)
+      final double leftPos = (col + leftCharMargin) * charWidth12Cpi;
+      final double topPos = (line * linePitch6Lpi) + (downOffset * 0.4);
+
       return pw.Positioned(
-        left: (col + 3) * 6.0,
-        top: (line * 12.0) + (downOffset / 3.0),
-        child: pw.Text(text, style: style),
+        left: leftPos,
+        top: topPos,
+        child: pw.Text(
+          text,
+          style: style,
+          maxLines: 1,
+        ),
       );
     }
 
