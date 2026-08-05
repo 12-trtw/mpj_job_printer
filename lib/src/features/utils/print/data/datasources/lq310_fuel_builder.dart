@@ -8,7 +8,9 @@ class Lq310FuelOrderBuilder {
   static const String escInit = '\x1B\x40';
   static const String escPageLen = '\x1B\x43\x21';
   static const String escCancelSkip = '\x1B\x4F';
-  static const String escThaiTis620 = '\x1B\x74\x15';
+
+  // 💡 [แก้ไข] รหัส TIS-18 คือ Hex 16
+  static const String escThaiTis18 = '\x1B\x74\x16';
   static const String escThaiITP = '\x1C\x70\x00';
 
   static const String font10Cpi = '\x1B\x50';
@@ -72,8 +74,10 @@ class Lq310FuelOrderBuilder {
       final int leftMarginCols = 3;
       final String escLeftMargin =
           '\x1B\x6C${String.fromCharCode(leftMarginCols)}';
+
+      // 💡 [แก้ไข] ดันคำสั่งบังคับภาษาต่อท้าย escInit ทันที
       String formContent =
-          '$escInit$escLeftMargin$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThaiITP$escSetTab';
+          '$escInit$escThaiITP$escThaiTis18$escLeftMargin$escPageLen$escCancelSkip$font12Cpi$escSetTab';
 
       final List<String> formLines = List.filled(33, '');
 
