@@ -70,10 +70,13 @@ class Lq310FormBuilder {
     await initializeDateFormatting('th_TH', null);
     await initializeDateFormatting('en_GB', null);
     final StringBuffer contentBuffer = StringBuffer();
+    final int leftMarginCols = 19;
+    final String escLeftMargin =
+        '\x1B\x6C${String.fromCharCode(leftMarginCols)}';
 
     for (final item in printData) {
       String formContent =
-          '$escInit$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThaiITP';
+          '$escInit$escLeftMargin$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThaiITP';
       final List<String> formLines = List.filled(33, '');
 
       final jobNo =

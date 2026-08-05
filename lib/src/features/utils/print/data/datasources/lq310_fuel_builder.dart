@@ -69,8 +69,11 @@ class Lq310FuelOrderBuilder {
     final StringBuffer contentBuffer = StringBuffer();
 
     for (final item in printData) {
+      final int leftMarginCols = 19;
+      final String escLeftMargin =
+          '\x1B\x6C${String.fromCharCode(leftMarginCols)}';
       String formContent =
-          '$escInit$escLeftMargin0$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThaiITP$escSetTab';
+          '$escInit$escLeftMargin$escPageLen$escCancelSkip$font12Cpi$escThaiTis620$escThaiITP$escSetTab';
 
       final List<String> formLines = List.filled(33, '');
 
